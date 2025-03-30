@@ -1,20 +1,24 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const branchSchema = new mongoose.Schema(
   {
-    name:{
-        type: String,
-    },
-    criteria:[{
+    bName: { type: String, required: true },
+    cutOffs: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        default: [],
-        ref: "criteria"
-    }],
-    fees:{
-        type: String
-    }
-    },
+        ref: "cutoff",
+      },
+    ],
+  },
   { timestamps: true }
-)
+);
 
-module.exports = mongoose.model("Branch", branchSchema)
+/**
+ * Branch Model
+ *
+ * - bName: Name of the branch (e.g., Computer Science, Mechanical Engineering)
+ * - cutOffs: Array of cutoff records (references CutoffSchema)
+ * - timestamps: Automatically adds createdAt and updatedAt fields
+ */
+
+module.exports = mongoose.model("branch", branchSchema);
