@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const feeSchema = new mongoose.Schema({
   category: { type: String, required: true },
-  amt: { type: String, required: true },
+  amt: { type: Number, required: true },
 });
 
 /**

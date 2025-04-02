@@ -6,7 +6,7 @@ const collegeSchema = new mongoose.Schema(
     name: { type: String, required: true },
     avatarImage: { type: mongoose.Schema.Types.ObjectId, ref: "image" },
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: "image" }],
-    dteCode: { type: String, unique: true },
+    dteCode: { type: Number, unique: true },
     location: { type: String },
     year: { type: String },
     affiliation: { type: String },

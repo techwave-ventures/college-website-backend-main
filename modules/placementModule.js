@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const placementSchema = new mongoose.Schema(
   {
-    average: { type: String },
-    highest: { type: String },
+    averageSalary: { type: Number },
+    highestSalary: { type: Number },
   },
   { timestamps: true }
 );
@@ -11,8 +11,8 @@ const placementSchema = new mongoose.Schema(
 /**
  * Placement Model
  *
- * - average: Average placement package (e.g., "6 LPA")
- * - highest: Highest placement package (e.g., "45 LPA")
+ * - averageSalary: Average placement package (e.g., "6 LPA")
+ * - highestSalary: Highest placement package (e.g., "45 LPA")
  * - timestamps: Automatically adds createdAt and updatedAt fields
  */
 
