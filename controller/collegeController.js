@@ -1,5 +1,5 @@
 const collegeModule = require("../modules/collegeModule");
-const cutOffModule = require("../modules/cutOffModule");
+const cutOffModule = require("../modules/cutoffModule");
 const branchModule = require("../modules/branchModule");
 const courseModule = require("../modules/courseModule");
 const ExamModule = require("../modules/examModule");
