@@ -1,7 +1,7 @@
 const collegeModule = require("../modules/collegeModule");
 const cutOffModule = require("../modules/cutOffModule");
 const branchModule = require("../modules/branchModule");
-const courseModule = require("../modules/CourseModule");
+const courseModule = require("../modules/courseModule");
 const ExamModule = require("../modules/examModule");
 
 // /college -> post
