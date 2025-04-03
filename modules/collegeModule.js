@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const CourseModule = require("./CourseModule");
 
 const collegeSchema = new mongoose.Schema(
   {
