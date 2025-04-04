@@ -22,3 +22,21 @@ exports.createExam = async(req,res) => {
         })
     }
 }
+
+exports.getExam = async (req, res) => {
+    try {
+        const exams = await examModule.find(); // Fetch all exams
+
+        return res.status(200).json({
+            success: true,
+            message: "Exams retrieved successfully",
+            body: exams
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
