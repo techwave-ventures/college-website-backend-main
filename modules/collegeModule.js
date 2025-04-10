@@ -4,6 +4,7 @@ const collegeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     avatarImage: { type: mongoose.Schema.Types.ObjectId, ref: "image" },
+    desription: { type: String },
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: "image" }],
     dteCode: { type: Number, unique: true },
     location: { type: String },
@@ -24,6 +25,7 @@ const collegeSchema = new mongoose.Schema(
  *
  * - name: College name (required)
  * - avatarImage: Reference to the main college image
+ * - description: Brief description of the college
  * - images: Array of references to additional college images
  * - dteCode: Unique DTE (Directorate of Technical Education) code
  * - location: Geographical location of the college
