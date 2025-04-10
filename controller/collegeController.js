@@ -63,12 +63,17 @@ exports.createcollege = async (req, res) => {
     const createdcollege = await collegeModule.create({
       name: data.name,
       location: data.location,
+      description: data.description,
+      dteCode: data.dteCode,
+      avatarImage: data.avatarImage || "",
+      images: data.images || [],
       year: data.year,
       affiliation: data.affiliation,
       type: data.type,
       admissionProcess: data.admissionProcess,
       infrastructure: data.infrastructure,
       review: data.reviews,
+      placement: data.placement,
       courses: courseArray,
     });
 
@@ -91,11 +96,11 @@ exports.createcollege = async (req, res) => {
     });
   }
 };
-
 exports.updatecollege = async (req, res) => {
   try {
+    const { collegeId, data } = req.body;
+
     const {
-      collegeId,
       name,
       location,
       year,
@@ -104,17 +109,17 @@ exports.updatecollege = async (req, res) => {
       admissionProcess,
       infrastructure,
       review,
-      courses,
-      branches,
+      avatarImage,
+      images,
       placement,
-    } = req.body;
+      courses = [],
+    } = data;
 
-    // Find the college by ID
-    let college = await collegeModule.findById(collegeId);
+    const college = await collegeModule.findById(collegeId);
     if (!college) {
       return res.status(404).json({
         success: false,
-        message: "college not found",
+        message: "College not found",
       });
     }
 
@@ -127,31 +132,23 @@ exports.updatecollege = async (req, res) => {
     college.admissionProcess = admissionProcess || college.admissionProcess;
     college.infrastructure = infrastructure || college.infrastructure;
     college.review = review || college.review;
-    college.courses = courses || college.courses;
+    college.avatarImage = avatarImage || college.avatarImage;
+    college.images = images || college.images;
+    college.placement = placement || college.placement;
+    college.courses = updatedCourseArray;
 
-    // Update branches if provided
-    if (branches) {
-      college.branches = branches;
-    }
-
-    // Update placement if provided
-    if (placement) {
-      college.placement = placement;
-    }
-
-    // Save the updated college
     await college.save();
 
     return res.status(200).json({
       success: true,
-      message: "college updated successfully",
+      message: "College updated successfully",
       college,
     });
   } catch (err) {
     return res.status(500).json({
       success: false,
       error: err.message,
-      message: "Something went wrong",
+      message: "Something went wrong in update",
     });
   }
 };
@@ -159,27 +156,33 @@ exports.updatecollege = async (req, res) => {
 exports.getcollege = async (req, res) => {
   try {
     const { collegeId } = req.params;
-    let collegeQuery = collegeModule.findById(collegeId);
 
-    const collegeExists = await collegeModule
+    const college = await collegeModule
       .findById(collegeId)
-      .select("branches placement")
-      .lean(); // Fetch required fields
-
-    if (collegeExists?.branches && collegeExists.branches.length > 0) {
-      collegeQuery = collegeQuery.populate("branches"); // Populate only if not empty
-    }
-
-    if (collegeExists?.placement) {
-      collegeQuery = collegeQuery.populate("placement");
-    }
-
-    const college = await collegeQuery.lean(); // Convert to plain object once at the end
+      .populate({
+        path: "courses",
+        populate: [
+          {
+            path: "branches",
+            populate: {
+              path: "cutOffs",
+            },
+          },
+          {
+            path: "fees",
+          },
+          {
+            path: "placements",
+          },
+        ],
+      })
+      .populate("placement") // top-level college.placement
+      .lean();
 
     if (!college) {
-      return res.status(402).json({
+      return res.status(404).json({
         success: false,
-        message: "college not found",
+        message: "College not found",
       });
     }
 
@@ -191,7 +194,7 @@ exports.getcollege = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: err.message,
-      message: "Something went wrong",
+      message: "Something went wrong in getcollege",
     });
   }
 };
