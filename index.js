@@ -12,7 +12,7 @@ const authRouter = require("./routes/authRoutes");
 const collegeRouter = require("./routes/collegeRoutes");
 const examRouter = require("./routes/examRoutes");
 const imageRouter = require("./routes/imageRoutes");
-
+const courseRouter = require("./routes/courseRoutes");
 const PORT = process.env.PORT || 5000;
 
 dotenv.config();
@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
 	cors({
-		origin: "*",
+		origin: ["https://collge-counseling-frontend.vercel.app/", "http://localhost:5173"],
 		credentials: true,
 	})
 );
@@ -41,6 +41,8 @@ app.use("/apiv1/auth", authRouter)
 app.use("/apiv1/college", collegeRouter)
 app.use("/apiv1/exam", examRouter);
 app.use("/apiv1/image", imageRouter);
+app.use("/apiv1/course", courseRouter);
+
 app.use("/hailing",(req,res)=>{
     //console.log("hailing route");
     return res.status(200).json({
@@ -60,7 +62,7 @@ app.listen(PORT, () => {
 	console.log(`App is listening at ${PORT}`);
 });
 
-
+//Heartbeats for self API call every 14 minutes4
 const axios = require('axios');
 
 function callSelfApi() {
