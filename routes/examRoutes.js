@@ -1,9 +1,10 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const {createExam} = require("../controller/examController")
+const { createExam, getExam, getAllExams } = require("../controller/examController");
 
-router.post("/",createExam);
+router.post("/", createExam);
+router.get("/:id", getExam); // Get a single exam by ID
+router.get("/", getAllExams); // Get all exams
 
-
-module.exports = router
+module.exports = router;
