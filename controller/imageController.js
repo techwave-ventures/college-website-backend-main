@@ -13,7 +13,7 @@ exports.uploadImage = async(req, res) =>{
         )
 
         const createdImage = await Image.create({
-            image: image.secure_url,
+            imageUrl: image.secure_url,
         });
 
         return res.status(200).json({
