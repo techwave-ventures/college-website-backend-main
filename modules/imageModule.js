@@ -1,10 +1,11 @@
+// modules/imageModule.js
 const mongoose = require("mongoose");
 
 const imageSchema = new mongoose.Schema(
-  {
-    imageUrl: { type: String },
-  },
-  { timestamps: true }
+    {
+        imageUrl: { type: String, required: true }, // Make URL required
+    },
+    { timestamps: true }
 );
 
 /**

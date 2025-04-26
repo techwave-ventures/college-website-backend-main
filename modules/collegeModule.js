@@ -1,23 +1,24 @@
+// modules/collegeModule.js
 const mongoose = require("mongoose");
 
 const collegeSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    avatarImage: { type: mongoose.Schema.Types.ObjectId, ref: "image" },
-    desription: { type: String },
-    images: [{ type: mongoose.Schema.Types.ObjectId, ref: "image" }],
-    dteCode: { type: Number, unique: true },
-    location: { type: String },
-    year: { type: String },
-    affiliation: { type: String },
-    type: { type: String },
-    courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "course" }],
-    admissionProcess: { type: String },
-    infrastructure: [{ type: String }],
-    placement: { type: mongoose.Schema.Types.ObjectId, ref: "placement" },
-    review: { type: String },
-  },
-  { timestamps: true }
+    {
+        name: { type: String, required: true },
+        avatarImage: { type: mongoose.Schema.Types.ObjectId, ref: "image" },
+        description: { type: String }, // Corrected typo from 'desription'
+        images: [{ type: mongoose.Schema.Types.ObjectId, ref: "image" }],
+        dteCode: { type: Number, unique: true, required: true }, // Added required
+        location: { type: String },
+        year: { type: String },
+        affiliation: { type: String },
+        type: { type: String }, // e.g., Government, Private
+        courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "course" }],
+        admissionProcess: { type: String },
+        infrastructure: [{ type: String }],
+        placement: { type: mongoose.Schema.Types.ObjectId, ref: "placement" }, // College-level placement
+        review: { type: String }, // Placeholder for potential future object
+    },
+    { timestamps: true }
 );
 
 /**

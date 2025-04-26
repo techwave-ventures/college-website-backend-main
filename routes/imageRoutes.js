@@ -1,10 +1,12 @@
-const express = require("express")
-const router = express.Router()
+// routes/imageRoutes.js
+const express = require("express");
+const router = express.Router();
 
 const {uploadImage, getImage, getAllImages} = require("../controller/imageController");
+const { auth, isAdmin } = require("../middleware/../middleware/authMiddleware"); // Added auth
 
-router.post("/",uploadImage);
-router.get("/:imageId/", getImage);
-router.get("/", getAllImages);
+router.post("/", auth, isAdmin, uploadImage); // Protect upload
+router.get("/:imageId", getImage);             // Public? Or auth?
+router.get("/", getAllImages);                // Public? Or auth?
 
-module.exports = router
+module.exports = router;

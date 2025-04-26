@@ -1,13 +1,16 @@
+// modules/examModule.js
 const mongoose = require("mongoose");
 
 const examSchema = new mongoose.Schema(
-  {
-    name: { type: String },
-    colleges: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "college", default: [] },
-    ],
-  },
-  { timestamps: true }
+    {
+        name: { type: String, required: true }, // Made name required
+        colleges: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "college",
+            default: []
+        }],
+    },
+    { timestamps: true }
 );
 
 /**

@@ -1,11 +1,12 @@
+// modules/placementModule.js
 const mongoose = require("mongoose");
 
 const placementSchema = new mongoose.Schema(
-  {
-    averageSalary: { type: Number },
-    highestSalary: { type: Number },
-  },
-  { timestamps: true }
+    {
+        averageSalary: { type: Number },
+        highestSalary: { type: Number },
+    },
+    { timestamps: true }
 );
 
 /**

@@ -1,81 +1,108 @@
-const collegeModule = require("../modules/collegeModule");
-const cutOffModule = require("../modules/cutoffModule");
-const branchModule = require("../modules/branchModule");
+// controller/courseController.js
 const courseModule = require("../modules/courseModule");
-const ExamModule = require("../modules/examModule");
+const collegeModule = require("../modules/collegeModule");
+const branchModule = require("../modules/branchModule");
+const feeModule = require("../modules/feeModule");
+const placementModule = require("../modules/placementModule");
+const cutOffModule = require("../modules/cutoffModule");
+const { createCourseAndDependencies } = require("../utils/creationHelpers"); // Import helper
 
-exports.createCourses = async (req, res) => {
-  try {
-    const { collegeId, data } = req.body || "";
-    const courses = data?.courses || [];
-    let courseArray = [];
+// POST /apiv1/college/:collegeId/course - Add a new course to a college
+exports.createCourseForCollege = async (req, res) => {
+    try {
+        const { collegeId } = req.params;
+        const courseData = req.body;
 
-    courses.forEach(async (course) => {
-      const branches = course.branches || [];
-      const fees = course.fees || [];
-      const placements = course.placements || {};
-      let branchArray = [];
-      let feesArray = [];
+        const college = await collegeModule.findById(collegeId);
+        if (!college) return res.status(404).json({ success: false, message: "College not found" });
 
-      //create courses
-      branches.forEach(async (branch) => {
-        let cutoffArray = [];
-        branch.cutOffs.forEach(async (cutoff) => {
-          const createdCutoff = await cutOffModule.create({
-            name: cutoff.name,
-            image: cutoff.image,
-          });
-          cutoffArray.push(createdCutoff._id);
-        });
-        const createdBranch = await branchModule.create({
-          bName: branch.bName,
-          cutOffs: cutoffArray,
-        });
-        branchArray.push(createdBranch._id);
-      });
+        const newCourseId = await createCourseAndDependencies(courseData); // Use helper
 
-      fees.forEach(async (fee) => {
-        const createdFee = await feeModule.create({
-          category: fee.category,
-          amt: fee.amount,
-        });
-        feesArray.push(createdFee._id);
-      });
+        college.courses.push(newCourseId);
+        await college.save();
 
-      const createdPlacement = await placementModule.create({
-        averageSalary: placements.averageSalary,
-        highestSalary: placements.highestSalary,
-      });
+        const populatedCourse = await courseModule.findById(newCourseId).populate(/* fields */).lean(); // Add population
 
-      const createdCourse = await courseModule.create({
-        name: course.name,
-        duration: course.duration,
-        branches: branchArray,
-        fees: feesArray,
-        placements: createdPlacement._id,
-      });
-      courseArray.push(createdCourse._id);
-    });
+        return res.status(201).json({ success: true, message: "Course added", course: populatedCourse });
 
-    const updateCollege = await collegeModule.findByIdAndUpdate(collegeId, {
-      $push: { courses: courseArray },
-    });
-    if (!updateCollege) {
-      return res.status(400).json({
-        success: false,
-        message: "college not found",
-      });
+    } catch (err) {
+        console.error("Create course for college error:", err);
+        return res.status(500).json({ success: false, message: "Failed add course", error: err.message });
     }
-    return res.status(200).json({
-      success: true,
-      message: "Courses created successfully",
-      data: updateCollege,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
+};
+
+// GET /apiv1/course/:courseId - Get a single course
+exports.getCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const course = await courseModule.findById(courseId)
+            .populate({ path: "branches", populate: { path: "cutOffs", populate: { path: "image" } } })
+            .populate("fees placement")
+            .lean();
+
+        if (!course) return res.status(404).json({ success: false, message: "Course not found" });
+        return res.status(200).json({ success: true, course });
+    } catch (err) {
+        console.error("Get course error:", err);
+        return res.status(500).json({ success: false, message:"Failed get course", error: err.message });
+    }
+};
+
+// PUT /apiv1/course/:courseId - Update a course
+exports.updateCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const { name, duration } = req.body;
+        if (!name && !duration) return res.status(400).json({ success: false, message: "No fields to update" });
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (duration) updateData.duration = duration;
+
+        const updatedCourse = await courseModule.findByIdAndUpdate(courseId, { $set: updateData }, { new: true, runValidators: true }).lean();
+
+        if (!updatedCourse) return res.status(404).json({ success: false, message: "Course not found" });
+        return res.status(200).json({ success: true, message: "Course updated", course: updatedCourse });
+    } catch (err) {
+        console.error("Update course error:", err);
+        return res.status(500).json({ success: false, message:"Failed update course", error: err.message });
+    }
+};
+
+// DELETE /apiv1/course/:courseId - Delete a course
+exports.deleteCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        const course = await courseModule.findById(courseId);
+        if (!course) return res.status(404).json({ success: false, message: "Course not found" });
+
+        // 1. Remove course ref from Colleges
+        await collegeModule.updateMany({ courses: courseId }, { $pull: { courses: courseId } });
+
+        // 2. Delete associated Branches (and their Cutoffs)
+        // TODO: Add cutoff image deletion if needed
+        const branchesToDelete = course.branches || [];
+        for (const branchId of branchesToDelete) {
+            const branch = await branchModule.findById(branchId);
+            if (branch && branch.cutOffs && branch.cutOffs.length > 0) {
+                await cutOffModule.deleteMany({ _id: { $in: branch.cutOffs } });
+            }
+        }
+        if (branchesToDelete.length > 0) await branchModule.deleteMany({ _id: { $in: branchesToDelete } });
+
+
+        // 3. Delete associated Fees
+        if (course.fees && course.fees.length > 0) await feeModule.deleteMany({ _id: { $in: course.fees } });
+
+        // 4. Delete associated Placement
+        if (course.placement) await placementModule.findByIdAndDelete(course.placement);
+
+        // 5. Delete Course
+        await courseModule.findByIdAndDelete(courseId);
+
+        return res.status(200).json({ success: true, message: "Course deleted" });
+    } catch (err) {
+         console.error("Delete course error:", err);
+        return res.status(500).json({ success: false, message:"Failed delete course", error: err.message });
+    }
 };

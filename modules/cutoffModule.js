@@ -1,11 +1,12 @@
+// modules/cutoffModule.js
 const mongoose = require("mongoose");
 
 const cutoffSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    image: { type: mongoose.Schema.Types.ObjectId, ref: "image" },
-  },
-  { timestamps: true }
+    {
+        name: { type: String, required: true }, // e.g., JEE Cutoff Round 1
+        image: { type: mongoose.Schema.Types.ObjectId, ref: "image" }, // Ref to image containing cutoff data
+    },
+    { timestamps: true }
 );
 
 /**

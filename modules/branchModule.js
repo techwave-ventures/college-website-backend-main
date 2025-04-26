@@ -1,16 +1,15 @@
+// modules/branchModule.js
 const mongoose = require("mongoose");
 
 const branchSchema = new mongoose.Schema(
-  {
-    bName: { type: String, required: true },
-    cutOffs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "cutoff",
-      },
-    ],
-  },
-  { timestamps: true }
+    {
+        bName: { type: String, required: true }, // e.g., Computer Science
+        cutOffs: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "cutoff",
+        }],
+    },
+    { timestamps: true }
 );
 
 /**

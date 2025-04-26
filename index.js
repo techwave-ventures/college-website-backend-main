@@ -1,85 +1,97 @@
+// server.js (or app.js)
 const express = require("express");
 const app = express();
 
+// Configuration and Middleware
 const database = require("./config/database");
-const {cloudinaryConnect} = require("./config/cloudinary");
+const { cloudinaryConnect } = require("./config/cloudinary");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const fileUpload = require("express-fileupload");
+const axios = require('axios'); // For heartbeat
 
-const authRouter = require("./routes/authRoutes");
+// Import Routers
+// const authRouter = require("./routes/authRoutes"); // Assuming you have this - Keep commented if code not provided
 const collegeRouter = require("./routes/collegeRoutes");
+const courseRouter = require("./routes/courseRoutes"); // Handles /course/:id routes
+const branchRouter = require("./routes/branchRoutes"); // Handles /branch/:id routes
 const examRouter = require("./routes/examRoutes");
 const imageRouter = require("./routes/imageRoutes");
-const courseRouter = require("./routes/courseRoutes");
+// Add other routers (placement, fee, cutoff) if you create them
+
+// Load environment variables (still useful for PORT, DB_URI, Cloudinary keys, JWT_SECRET etc.)
+dotenv.config();
 const PORT = process.env.PORT || 5000;
 
-dotenv.config();
-
+// Connect DB & Cloudinary
 database.connect();
 cloudinaryConnect();
- 
-app.use(express.json());
-app.use(cookieParser());
-app.use(
-	cors({
-		origin: ["https://collge-counseling-frontend.vercel.app/", "http://localhost:5173"],
-		credentials: true,
-	})
-);
 
-app.use(
-	fileUpload({
-		useTempFiles: true,
-		tempFileDir: "/tmp/",
-	})
-);
+// Standard Middleware
+app.use(express.json()); // Parse JSON bodies
+app.use(cookieParser()); // Parse cookies
 
-//routes
-app.use("/apiv1/auth", authRouter)
-app.use("/apiv1/college", collegeRouter)
+// Apply CORS using specific origins from the previous version
+app.use(cors({
+    origin: ["https://collge-counseling-frontend.vercel.app", "http://localhost:5173"], // Specific origins
+    credentials: true,
+}));
+
+// File Upload Middleware
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/", // Standard temp directory
+}));
+
+// --- API Routes ---
+// Mount the routers - using the structure from the refined version
+// app.use("/apiv1/auth", authRouter); // Keep commented if not implemented
+app.use("/apiv1/college", collegeRouter); // Handles /college, /college/:id/*, /college/:id/placement, /college/:id/course
+app.use("/apiv1/course", courseRouter);   // Handles /course/:id, /course/:id/branch
+app.use("/apiv1/branch", branchRouter);   // Handles /branch/:id
 app.use("/apiv1/exam", examRouter);
 app.use("/apiv1/image", imageRouter);
-app.use("/apiv1/course", courseRouter);
+// Add other routes here if needed
 
-app.use("/hailing",(req,res)=>{
-    //console.log("hailing route");
-    return res.status(200).json({
-        success:true,
-        message:"hailing route",
-    })
-})
+// --- Health Check / Keep-Alive Routes ---
+app.get("/hailing", (req, res) => {
+    // console.log("Hailing route hit at", new Date().toISOString());
+    return res.status(200).json({ success: true, message: "Server is awake" }); // Message updated for clarity
+});
 
+// Root route for basic check
 app.get("/", (req, res) => {
-	return res.json({
-		success: true,
-		message: "Your server is up and running ...",
-	});
+    return res.json({ success: true, message: "College Counseling Backend is Running..." }); // Message updated
 });
 
+// --- Server Activation ---
 app.listen(PORT, () => {
-	console.log(`App is listening at ${PORT}`);
+    console.log(`App is listening at http://localhost:${PORT}`);
 });
 
-//Heartbeats for self API call every 14 minutes4
-const axios = require('axios');
+// --- Heartbeat for Render/Free Tier Hosting ---
+const HEARTBEAT_URL = 'https://college-website-backend.onrender.com/hailing'; // Specific URL from previous version
 
 function callSelfApi() {
-    axios.get('https://college-website-backend.onrender.com/hailing')
+    // console.log(`Sending heartbeat to: ${HEARTBEAT_URL}`);
+    axios.get(HEARTBEAT_URL) // Use the specific URL
         .then(response => {
-            console.log('API Response:', response.data);
+            // Log success message from the response, more informative
+            console.log('Heartbeat Success:', response.data?.message || 'OK', "at", new Date().toLocaleTimeString());
         })
         .catch(error => {
-            console.error('Error calling API:', error.message);
+            // Log the specific URL that failed
+            console.error('Heartbeat Error calling API:', HEARTBEAT_URL, error.message);
         });
 }
 
-
 function scheduleApiCall() {
-    callSelfApi(); 
-    setInterval(callSelfApi, 14 * 60 * 1000);
+    console.log(`Scheduling heartbeat API call to ${HEARTBEAT_URL} every 14 minutes.`);
+    callSelfApi(); // Call immediately on start
+    setInterval(callSelfApi, 14 * 60 * 1000); // Repeat every 14 minutes
 }
 
-
+// Always schedule the heartbeat call, as in the previous version
 scheduleApiCall();
+

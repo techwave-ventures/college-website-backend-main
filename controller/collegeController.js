@@ -1,200 +1,114 @@
+// controller/collegeController.js
 const collegeModule = require("../modules/collegeModule");
-const cutOffModule = require("../modules/cutoffModule");
-const branchModule = require("../modules/branchModule");
 const courseModule = require("../modules/courseModule");
 const ExamModule = require("../modules/examModule");
+const { createCourseAndDependencies } = require("../utils/creationHelpers"); // Import helper
 
-// /college -> post
-
+// --- POST /apiv1/college - Create a new College ---
 exports.createcollege = async (req, res) => {
-  try {
-    const { examId, data } = req.body || "";
+    try {
+        const { examId, data } = req.body;
 
-    const courses = data?.courses || [];
-    let courseArray = [];
+        if (!data || !examId) return res.status(400).json({ success: false, message: "Missing required fields (examId, data)" });
+        if (!data.name || !data.dteCode) return res.status(400).json({ success: false, message: "Missing required college fields (name, dteCode)" });
 
-    courses.forEach(async (course) => {
-      const branches = course.branches || [];
-      const fees = course.fees || [];
-      const placements = course.placements || {};
-      let branchArray = [];
-      let feesArray = [];
+        const { courses = [], ...collegeData } = data;
+        let courseIdArray = [];
 
-      //create courses
-      branches.forEach(async (branch) => {
-        let cutoffArray = [];
-        branch.cutOffs.forEach(async (cutoff) => {
-          const createdCutoff = await cutOffModule.create({
-            name: cutoff.name,
-            image: cutoff.image,
-          });
-          cutoffArray.push(createdCutoff._id);
+        if (courses.length > 0) {
+            const courseCreationPromises = courses.map(course => createCourseAndDependencies(course));
+            courseIdArray = await Promise.all(courseCreationPromises);
+        }
+
+        const createdcollege = await collegeModule.create({
+            ...collegeData, courses: courseIdArray,
+            avatarImage: collegeData.avatarImage || null, images: collegeData.images || [],
+            placement: collegeData.placement || null,
         });
-        const createdBranch = await branchModule.create({
-          bName: branch.bName,
-          cutOffs: cutoffArray,
-        });
-        branchArray.push(createdBranch._id);
-      });
 
-      fees.forEach(async (fee) => {
-        const createdFee = await feeModule.create({
-          category: fee.category,
-          amt: fee.amount,
-        });
-        feesArray.push(createdFee._id);
-      });
+        const exam = await ExamModule.findById(examId);
+        if (exam) { exam.colleges.push(createdcollege._id); await exam.save(); }
+        else { console.warn(`Exam ID ${examId} not found creating college ${createdcollege._id}`); }
 
-      const createdPlacement = await placementModule.create({
-        averageSalary: placements.averageSalary,
-        highestSalary: placements.highestSalary,
-      });
+        const populatedCollege = await collegeModule.findById(createdcollege._id).populate(/* deep population as before */).lean(); // Add population here
 
-      const createdCourse = await courseModule.create({
-        name: course.name,
-        duration: course.duration,
-        branches: branchArray,
-        fees: feesArray,
-        placements: createdPlacement._id,
-      });
-      courseArray.push(createdCourse._id);
-    });
-
-    const createdcollege = await collegeModule.create({
-      name: data.name,
-      location: data.location,
-      description: data.description,
-      dteCode: data.dteCode,
-      avatarImage: data.avatarImage || "",
-      images: data.images || [],
-      year: data.year,
-      affiliation: data.affiliation,
-      type: data.type,
-      admissionProcess: data.admissionProcess,
-      infrastructure: data.infrastructure,
-      review: data.reviews,
-      placement: data.placement,
-      courses: courseArray,
-    });
-
-    // add college in exam
-    const exam = await ExamModule.findById(examId);
-    exam.colleges.push(createdcollege);
-    await exam.save();
-
-    return res.status(201).json({
-      success: true,
-      message: "college created",
-      college: createdcollege,
-      exam: exam,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      error: err.message,
-      message: "Something went wrong in catch block",
-    });
-  }
+        return res.status(201).json({ success: true, message: "College created", college: populatedCollege });
+    } catch (err) {
+        console.error("Create college error:", err);
+        if (err.code === 11000) return res.status(409).json({ success: false, message: `DTE Code already exists.` });
+        return res.status(500).json({ success: false, error: err.message, message: "Failed create college" });
+    }
 };
+
+// --- PUT /apiv1/college/:collegeId - Update College Top-Level Fields ---
 exports.updatecollege = async (req, res) => {
-  try {
-    const { collegeId, data } = req.body;
+    try {
+        const { collegeId } = req.params;
+        const updates = req.body;
+        delete updates.courses; // Don't update courses array here
 
-    const {
-      name,
-      location,
-      year,
-      affiliation,
-      type,
-      admissionProcess,
-      infrastructure,
-      review,
-      avatarImage,
-      images,
-      placement,
-      courses = [],
-    } = data;
+        const updatedCollege = await collegeModule.findByIdAndUpdate(collegeId, { $set: updates }, { new: true, runValidators: true })
+            .populate(/* necessary fields */).lean(); // Add population
 
-    const college = await collegeModule.findById(collegeId);
-    if (!college) {
-      return res.status(404).json({
-        success: false,
-        message: "College not found",
-      });
+        if (!updatedCollege) return res.status(404).json({ success: false, message: "College not found" });
+        return res.status(200).json({ success: true, message: "College updated", college: updatedCollege });
+    } catch (err) {
+         console.error("Update college error:", err);
+        if (err.code === 11000) return res.status(409).json({ success: false, message: `DTE Code already exists.` });
+        return res.status(500).json({ success: false, error: err.message, message: "Failed update college" });
     }
-
-    // Update college fields
-    college.name = name || college.name;
-    college.location = location || college.location;
-    college.year = year || college.year;
-    college.affiliation = affiliation || college.affiliation;
-    college.type = type || college.type;
-    college.admissionProcess = admissionProcess || college.admissionProcess;
-    college.infrastructure = infrastructure || college.infrastructure;
-    college.review = review || college.review;
-    college.avatarImage = avatarImage || college.avatarImage;
-    college.images = images || college.images;
-    college.placement = placement || college.placement;
-    college.courses = updatedCourseArray;
-
-    await college.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "College updated successfully",
-      college,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      error: err.message,
-      message: "Something went wrong in update",
-    });
-  }
 };
 
+// --- GET /apiv1/college/:collegeId - Get a specific college by ID ---
 exports.getcollege = async (req, res) => {
-  try {
-    const { collegeId } = req.params;
-
-    const college = await collegeModule
-      .findById(collegeId)
-      .populate({
-        path: "courses",
-        populate: [
-          {
-            path: "branches",
-            populate: {
-              path: "cutOffs",
-            },
-          },
-          {
-            path: "fees",
-          },
-          {
-            path: "placements",
-          },
-        ],
-      })
-      .populate("placement") // top-level college.placement
-      .lean();
-
-    if (!college) {
-      return res.status(404).json({
-        success: false,
-        message: "College not found",
-      });
+    try {
+        const { collegeId } = req.params;
+        const college = await collegeModule.findById(collegeId)
+             .populate('avatarImage images placement') // Populate top level refs
+             .populate({ // Deep populate courses
+                path: "courses",
+                populate: [
+                    { path: "branches", populate: { path: "cutOffs", populate: { path: "image" } } },
+                    { path: "fees" }, { path: "placement" }
+                 ],
+             })
+            .lean();
+        if (!college) return res.status(404).json({ success: false, message: "College not found" });
+        return res.status(200).json({ success: true, college });
+    } catch (err) {
+         console.error("Get college error:", err);
+         return res.status(500).json({ success: false, message: "Failed get college", error: err.message });
     }
+};
 
-    return res.status(200).json({
-      success: true,
-      college,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      error: err.message,
-      message: "Something went wrong in getcollege",
-    });
-  }
+// --- GET /apiv1/college - Get all colleges ---
+exports.getAllColleges = async (req, res) => {
+     try {
+        const colleges = await collegeModule.find()
+            .populate('avatarImage', 'imageUrl')
+            .select('name location type dteCode avatarImage year affiliation')
+            .lean();
+        return res.status(200).json({ success: true, count: colleges.length, colleges });
+    } catch (err) {
+        console.error("Get all colleges error:", err);
+        return res.status(500).json({ success: false, message:"Failed get colleges", error: err.message });
+    }
+};
+
+// --- DELETE /apiv1/college/:collegeId - Delete a college ---
+exports.deleteCollege = async (req, res) => {
+     try {
+        const { collegeId } = req.params;
+        const college = await collegeModule.findById(collegeId);
+        if (!college) return res.status(404).json({ success: false, message: 'College not found' });
+
+        // TODO: Implement thorough cleanup (courses, exams, images etc.) before deleting
+        // Example: await courseModule.deleteMany({ _id: { $in: college.courses } }); // Needs more robust cleanup
+
+        await collegeModule.findByIdAndDelete(collegeId);
+        return res.status(200).json({ success: true, message: 'College deleted successfully' });
+    } catch (err) {
+        console.error("Delete college error:", err);
+        return res.status(500).json({ success: false, message:"Failed delete college", error: err.message });
+    }
 };
