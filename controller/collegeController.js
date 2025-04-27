@@ -1,6 +1,7 @@
 // controller/collegeController.js
 const collegeModule = require("../modules/collegeModule");
 const courseModule = require("../modules/courseModule");
+const feeModule = require("../modules/feeModule");
 const ExamModule = require("../modules/examModule");
 const { createCourseAndDependencies } = require("../utils/creationHelpers"); // Import helper
 
@@ -44,9 +45,12 @@ exports.createcollege = async (req, res) => {
 exports.updatecollege = async (req, res) => {
     try {
         const { collegeId } = req.params;
-        const updates = req.body;
-        delete updates.courses; // Don't update courses array here
+        const courses = req.body.courses;
+        delete req.body.courses;
 
+        const updates = req.body;
+
+        // delete updates.courses; // Don't update courses array here
         const updatedCollege = await collegeModule.findByIdAndUpdate(collegeId, { $set: updates }, { new: true, runValidators: true })
             .populate(/* necessary fields */).lean(); // Add population
 

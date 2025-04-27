@@ -9,10 +9,10 @@ const { createCourseForCollege } = require("../controller/courseController");
 const { createPlacement } = require("../controller/placementController");
 const { auth, isAdmin } = require("../middleware/authMiddleware");
 
-router.post("/", auth, isAdmin, createcollege);
+router.post("/", createcollege);
 router.get("/", getAllColleges);
 router.get("/:collegeId", getcollege);
-router.put("/:collegeId", auth, isAdmin, updatecollege);
+router.put("/:collegeId", updatecollege);
 router.delete("/:collegeId", auth, isAdmin, deleteCollege);
 
 // Add nested resources TO a college
