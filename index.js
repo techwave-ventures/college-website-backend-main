@@ -34,7 +34,7 @@ app.use(cookieParser()); // Parse cookies
 
 // Apply CORS using specific origins from the previous version
 app.use(cors({
-    origin: [*], // Specific origins
+    origin: true, // Specific origins
     credentials: true,
 }));
 
