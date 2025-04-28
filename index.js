@@ -13,6 +13,7 @@ const axios = require('axios'); // For heartbeat
 
 // Import Routers
 const authRouter = require("./routes/authRoutes"); // Assuming you have this - Keep commented if code not provided
+const userRoutes = require('./routes/userRoutes'); // Import the new user routes
 const collegeRouter = require("./routes/collegeRoutes");
 const courseRouter = require("./routes/courseRoutes"); // Handles /course/:id routes
 const branchRouter = require("./routes/branchRoutes"); // Handles /branch/:id routes
@@ -47,6 +48,7 @@ app.use(fileUpload({
 // --- API Routes ---
 // Mount the routers - using the structure from the refined version
 app.use("/apiv1/auth", authRouter); // Keep commented if not implemented
+app.use('/apiv1/users', userRoutes); // Mount user routes (profile)
 app.use("/apiv1/college", collegeRouter); // Handles /college, /college/:id/*, /college/:id/placement, /college/:id/course
 app.use("/apiv1/course", courseRouter);   // Handles /course/:id, /course/:id/branch
 app.use("/apiv1/branch", branchRouter);   // Handles /branch/:id
