@@ -46,7 +46,7 @@ app.use(fileUpload({
 
 // --- API Routes ---
 // Mount the routers - using the structure from the refined version
-// app.use("/apiv1/auth", authRouter); // Keep commented if not implemented
+app.use("/apiv1/auth", authRouter); // Keep commented if not implemented
 app.use("/apiv1/college", collegeRouter); // Handles /college, /college/:id/*, /college/:id/placement, /college/:id/course
 app.use("/apiv1/course", courseRouter);   // Handles /course/:id, /course/:id/branch
 app.use("/apiv1/branch", branchRouter);   // Handles /branch/:id
