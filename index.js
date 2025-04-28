@@ -12,7 +12,7 @@ const fileUpload = require("express-fileupload");
 const axios = require('axios'); // For heartbeat
 
 // Import Routers
-// const authRouter = require("./routes/authRoutes"); // Assuming you have this - Keep commented if code not provided
+const authRouter = require("./routes/authRoutes"); // Assuming you have this - Keep commented if code not provided
 const collegeRouter = require("./routes/collegeRoutes");
 const courseRouter = require("./routes/courseRoutes"); // Handles /course/:id routes
 const branchRouter = require("./routes/branchRoutes"); // Handles /branch/:id routes
@@ -71,7 +71,7 @@ app.listen(PORT, () => {
 });
 
 // --- Heartbeat for Render/Free Tier Hosting ---
-const HEARTBEAT_URL = 'https://college-website-backend.onrender.com/hailing'; // Specific URL from previous version
+const HEARTBEAT_URL = 'https://college-website-backend-main.onrender.com/hailing'; // Specific URL from previous version
 
 function callSelfApi() {
     // console.log(`Sending heartbeat to: ${HEARTBEAT_URL}`);
