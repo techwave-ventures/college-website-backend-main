@@ -34,7 +34,7 @@ app.use(cookieParser()); // Parse cookies
 
 // Apply CORS using specific origins from the previous version
 app.use(cors({
-    origin: ["https://collge-counseling-frontend.vercel.app", "http://localhost:5173"], // Specific origins
+    origin: ["https://collge-counseling-frontend-sage.vercel.app", "http://localhost:5173"], // Specific origins
     credentials: true,
 }));
 
