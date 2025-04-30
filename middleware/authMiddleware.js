@@ -1,120 +1,84 @@
-// File: middleware/authMiddleware.js (adjust path as needed)
-
+// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-// const User = require("../modules/userModule"); // User model not strictly needed for basic auth check
+dotenv.config();
 
-dotenv.config(); // Ensure environment variables are loaded
+// Define consistent cookie name
+const COOKIE_NAME = 'authToken';
+// Define consistent env variable name for secret
+const JWT_SECRET = process.env.API_SECRET;
 
 exports.auth = async (req, res, next) => {
-    console.log("[Auth Middleware] Checking authentication..."); // Log entry
+    console.log("[Auth Middleware] Checking for cookie:", COOKIE_NAME);
 
     try {
-        let token = null;
+        // *** CHANGE: Prioritize HTTP-only cookie ***
+        // Use req.signedCookies if you used signed: true when setting cookie and initializing cookieParser
+        const token = req.cookies?.[COOKIE_NAME];
+        // const token = req.signedCookies?.[COOKIE_NAME]; // If using signed cookies
 
-        // 1. Try getting token from HTTP-only cookie (most secure)
-        if (req.cookies?.auth_token) { // Use the name set by your /api/auth/set-token route
-            token = req.cookies.auth_token;
-            console.log("[Auth Middleware] Token found in cookie 'auth_token'.");
-        }
-        // 2. Fallback: Try getting token from Authorization header
-        else if (req.headers.authorization?.startsWith("Bearer ")) {
-            token = req.headers.authorization.replace("Bearer ", "");
-            console.log("[Auth Middleware] Token found in Authorization header.");
-        }
-        // 3. Fallback: Try getting token from request body (less common for GET requests)
-        else if (req.body?.token) {
-            token = req.body.token;
-            console.log("[Auth Middleware] Token found in request body.");
-        }
-
-        // Check if token was found
         if (!token) {
-            console.warn("[Auth Middleware] Token Missing.");
-            return res.status(401).json({ success: false, message: `Token Missing` });
+            console.warn(`[Auth Middleware] Cookie '${COOKIE_NAME}' missing.`);
+            return res.status(401).json({ success: false, message: `Authentication required. Please log in.` });
         }
+
+        console.log(`[Auth Middleware] Found cookie '${COOKIE_NAME}'. Verifying...`);
 
         // Verify the token
         try {
-            console.log("[Auth Middleware] Verifying token...");
-            const decodedPayload = jwt.verify(token, process.env.API_SECRET);
+            // Use the consistent secret name
+            const decodedPayload = jwt.verify(token, JWT_SECRET);
             console.log("[Auth Middleware] Token verified successfully. Payload:", decodedPayload);
 
-            // Attach the decoded payload to the request object
-            // Ensure payload contains necessary info like 'id'
-            if (!decodedPayload.id) {
-                 console.error("[Auth Middleware] Error: Decoded token payload missing 'id'.");
-                 return res.status(401).json({ success: false, message: "Token payload is invalid (missing ID)." });
+            // *** Ensure payload contains necessary info (like 'id' and 'accountType') ***
+            if (!decodedPayload.id || !decodedPayload.accountType) {
+                 console.error("[Auth Middleware] Error: Decoded token payload missing 'id' or 'accountType'.");
+                 // Clear the invalid cookie
+                 res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none', path: '/' });
+                 return res.status(401).json({ success: false, message: "Token payload is invalid." });
             }
-            req.user = decodedPayload; // Make payload available to subsequent middleware/controllers
 
-            next(); // Proceed to the next step (e.g., the controller)
+            // Attach the decoded payload to the request object
+            req.user = decodedPayload; // Make payload available
+
+            next(); // Proceed
 
         } catch (jwtError) {
-            // Handle JWT verification errors (invalid signature, expired, etc.)
             console.error("[Auth Middleware] JWT Verification Error:", jwtError.message);
-            return res
-                .status(401)
-                .json({ success: false, message: `Token is invalid or expired: ${jwtError.message}` });
+            // Clear the invalid/expired cookie
+            res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none', path: '/' });
+            return res.status(401).json({
+                 success: false,
+                 message: `Session expired or token invalid. Please log in again.`, // User-friendly message
+                 error: jwtError.name === 'TokenExpiredError' ? 'token_expired' : 'token_invalid'
+            });
         }
 
     } catch (error) {
-        // Catch unexpected errors during the token extraction or other steps
-        console.error("[Auth Middleware] Unexpected Error:", error); // Log the actual error
-        return res.status(500).json({ // Use 500 for unexpected server errors
+        console.error("[Auth Middleware] Unexpected Error:", error);
+        return res.status(500).json({
             success: false,
-            // Provide a more generic message for unexpected errors
-            message: `Authentication error. Please try again later.`,
+            message: `Internal server error during authentication.`,
         });
     }
 };
 
-// --- Role Check Middleware (Keep as they were, but ensure req.user exists) ---
+// --- Role Check Middleware (isStudent, isAdmin) ---
+// These should work as before, provided the JWT payload generated during login includes 'accountType'
+// and the 'auth' middleware successfully attaches req.user. Your existing code for these looks fine.
 
 exports.isStudent = async (req, res, next) => {
-    try {
-        // Check if req.user was attached by the auth middleware
-        if (!req.user || !req.user.accountType) {
-             console.error("[isStudent Middleware] Error: req.user not populated correctly by auth middleware.");
-             return res.status(403).json({ success: false, message: "User authentication data missing." });
-        }
-
-        // Check the account type from the token payload
-        if (req.user.accountType !== "Student") {
-            return res.status(403).json({ // 403 Forbidden is more appropriate here
-                success: false,
-                message: "Access denied. This route is protected for Students.",
-            });
-        }
-        next(); // User is a Student, proceed
-    } catch (error) {
-        console.error("[isStudent Middleware] Error:", error);
-        return res
-            .status(500)
-            .json({ success: false, message: `Server error during role verification.` });
-    }
+    // ... (your existing code is likely fine here, ensure req.user.accountType exists)
+     if (!req.user || req.user.accountType !== "Student") {
+          return res.status(403).json({ success: false, message: "Access denied. Student role required." });
+     }
+     next();
 };
 
 exports.isAdmin = async (req, res, next) => {
-    try {
-         // Check if req.user was attached by the auth middleware
-        if (!req.user || !req.user.accountType) {
-             console.error("[isAdmin Middleware] Error: req.user not populated correctly by auth middleware.");
-             return res.status(403).json({ success: false, message: "User authentication data missing." });
-        }
-
-        // Check the account type from the token payload
-        if (req.user.accountType !== "Admin") {
-            return res.status(403).json({ // 403 Forbidden
-                success: false,
-                message: "Access denied. This route is protected for Admins.",
-            });
-        }
-        next(); // User is an Admin, proceed
-    } catch (error) {
-        console.error("[isAdmin Middleware] Error:", error);
-        return res
-            .status(500)
-            .json({ success: false, message: `Server error during role verification.` });
-    }
+    // ... (your existing code is likely fine here, ensure req.user.accountType exists)
+     if (!req.user || req.user.accountType !== "Admin") {
+          return res.status(403).json({ success: false, message: "Access denied. Admin role required." });
+     }
+     next();
 };
