@@ -144,7 +144,7 @@ exports.login = async (req, res) => {
               httpOnly: true, // Cannot be accessed by client-side JS
               secure: true, // Send only over HTTPS in production
               sameSite: 'none', // Helps prevent CSRF. 'strict' is more secure but can break some cross-site linking. 'lax' is usually a good default.
-              // path: '/', // Make cookie available for all paths on the domain
+              path: '/', // Make cookie available for all paths on the domain
               // domain: 'yourdomain.com' // Uncomment and set if needed for subdomains in production
               // signed: true // Uncomment if you are using signed cookies (requires COOKIE_SECRET in cookieParser)
           };
