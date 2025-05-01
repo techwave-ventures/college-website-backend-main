@@ -142,8 +142,11 @@ exports.login = async (req, res) => {
           const cookieOptions = {
               expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // Matches token expiry (24 hours)
               httpOnly: true, // Cannot be accessed by client-side JS
-              secure: true, // Send only over HTTPS in production
-              sameSite: 'none', // Helps prevent CSRF. 'strict' is more secure but can break some cross-site linking. 'lax' is usually a good default.
+              secure: process.env.NODE_ENV === 'production',
+              // Adjust sameSite based on your setup:
+              // 'lax' is a good default if frontend/backend are same-site.
+              // 'none' (with secure=true) is needed for cross-site, requires HTTPS.
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust as needed
               path: '/', // Make cookie available for all paths on the domain
               // domain: 'yourdomain.com' // Uncomment and set if needed for subdomains in production
               // signed: true // Uncomment if you are using signed cookies (requires COOKIE_SECRET in cookieParser)
