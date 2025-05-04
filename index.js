@@ -22,6 +22,7 @@ const courseRouter = require("./routes/courseRoutes");
 const branchRouter = require("./routes/branchRoutes");
 const examRouter = require("./routes/examRoutes");
 const imageRouter = require("./routes/imageRoutes");
+const paymentRouter = require("./routes/paymentRoutes");
 // Add other routers if needed
 
 const app = express();
@@ -91,6 +92,7 @@ app.use("/apiv1/course", courseRouter);
 app.use("/apiv1/branch", branchRouter);
 app.use("/apiv1/exam", examRouter);
 app.use("/apiv1/image", imageRouter);
+app.use("/apiv1", paymentRouter); // Payment routes
 // Add other routes here
 
 // --- Health Check / Keep-Alive Routes ---
