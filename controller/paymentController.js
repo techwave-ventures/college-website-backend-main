@@ -9,8 +9,8 @@ require('dotenv').config();
 // --- PhonePe Configuration ---
 const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY;
-const PHONEPE_SALT_INDEX = process.env.PHONEPE_API_KEY_INDEX || '1'; // Default to 1 if not set
-const PHONEPE_ENV = process.env.PHONEPE_ENV || 'UAT'; // 'UAT' or 'PRODUCTION'
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const PHONEPE_ENV = process.env.PHONEPE_ENV || 'UAT';
 
 const PHONEPE_HOST_URL = PHONEPE_ENV === 'PRODUCTION'
     ? 'https://api.phonepe.com/apis/hermes'
@@ -18,56 +18,56 @@ const PHONEPE_HOST_URL = PHONEPE_ENV === 'PRODUCTION'
 
 const PHONEPE_PAY_API_URL = `${PHONEPE_HOST_URL}/pg/v1/pay`;
 
-// Ensure URLs are defined in your .env
-const BACKEND_CALLBACK_URL = process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/apiv1/payment/callback` : 'http://localhost:3001/apiv1/payment/callback'; // Provide a default for safety
-const FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/payment-status` : 'http://localhost:3000/payment-status'; // Provide a default
+const BACKEND_CALLBACK_URL = process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/apiv1/payment/callback` : 'http://localhost:5000/apiv1/payment/callback'; // Adjusted default port
+const FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/payment-status` : 'http://localhost:5173/payment-status';
 
 // --- Controller Functions ---
 
-/**
- * initiatePayment
- * Handles the request from the frontend to start the PhonePe payment process.
- * Expects registration data in req.body.
- * Expects authenticated user info in req.user (added by auth middleware).
- */
 exports.initiatePayment = async (req, res) => {
-    console.log("[initiatePayment] Request received for user:", req.user?.email); // Log authenticated user
+    console.log("[initiatePayment] Request received for user:", req.user?.email);
     console.log("[initiatePayment] Request body:", req.body);
 
     // 1. Extract and Validate Form Data
     const {
         name,
         casteCategory,
-        email, // Use email from authenticated user (req.user) for consistency? Or from form? Decide based on requirements.
-        phoneNumber, // Use phone from authenticated user (req.user)? Or from form?
+        email: formEmail, // Rename to avoid conflict with userEmail
+        phoneNumber: formPhoneNumber, // Rename
         whatsappNumber,
         questions
     } = req.body;
 
-    // Use authenticated user's details if preferred, otherwise use form data
-    const userEmail = req.user?.email || email;
-    const userPhoneNumber = req.user?.phoneNumber || phoneNumber; // Assuming phoneNumber is in req.user payload
+    // Prioritize authenticated user details, fall back to form data
+    const userEmail = req.user?.email || formEmail;
+    // Ensure req.user.phoneNumber is available if using it, otherwise use formPhoneNumber
+    const validatedPhoneNumber = req.user?.phoneNumber || formPhoneNumber;
 
-    // Basic validation
-    if (!name || !casteCategory || !userEmail || !userPhoneNumber || !whatsappNumber || !questions) {
-        console.error("[initiatePayment] Validation Failed: Missing required fields.");
+    // Basic validation (ensure all fields used below are validated)
+    if (!name || !casteCategory || !userEmail || !validatedPhoneNumber || !whatsappNumber || !questions) {
+        console.error("[initiatePayment] Validation Failed: Missing required fields.", { name, casteCategory, userEmail, validatedPhoneNumber, whatsappNumber, questions });
         return res.status(400).json({ success: false, message: "Missing required registration fields." });
     }
-     if (!/^\d{10}$/.test(userPhoneNumber)) {
-         console.error("[initiatePayment] Validation Failed: Invalid phone number format.");
+     if (!/^\d{10}$/.test(validatedPhoneNumber)) {
+         console.error(`[initiatePayment] Validation Failed: Invalid phone number format: ${validatedPhoneNumber}`);
          return res.status(400).json({ success: false, message: "Invalid phone number format (must be 10 digits)." });
     }
      if (!/^\d{10}$/.test(whatsappNumber)) {
-         console.error("[initiatePayment] Validation Failed: Invalid WhatsApp number format.");
+         console.error(`[initiatePayment] Validation Failed: Invalid WhatsApp number format: ${whatsappNumber}`);
          return res.status(400).json({ success: false, message: "Invalid WhatsApp number format (must be 10 digits)." });
     }
+     if (!PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY || !PHONEPE_SALT_INDEX) {
+         console.error("[initiatePayment] Server Configuration Error: PhonePe credentials missing in .env");
+         return res.status(500).json({ success: false, message: "Payment gateway configuration error." });
+     }
+
 
     // --- Payment Details ---
-    const amount = 100; // Example: 1 Rupee (Amount in paisa)
-    const merchantTransactionId = `MT_${uuidv4().replace(/-/g, '').slice(0, 25)}`; // Ensure unique and within length limits
-    const merchantUserId = req.user?.id || `MUID_${userEmail.split('@')[0]}`; // Use authenticated user ID if available
+    const amount = 100; // Amount in paisa (₹1)
+    // Ensure unique ID, maybe shorter for testing
+    const merchantTransactionId = `CAMPUSSAATHI_${Date.now()}`; // Simpler unique ID
+    const merchantUserId = req.user?.id || `MUID_${userEmail.replace(/[^a-zA-Z0-9]/g, '_').slice(0,20)}`; // Use authenticated user ID, ensure valid characters
 
-    console.log(`[initiatePayment] Processing Transaction ID: ${merchantTransactionId} for User ID: ${merchantUserId}`);
+    console.log(`[initiatePayment] Processing Txn ID: ${merchantTransactionId} for User ID: ${merchantUserId}, Amount: ${amount} paisa`);
 
     // 2. Construct PhonePe Payload
     const paymentPayload = {
@@ -75,14 +75,20 @@ exports.initiatePayment = async (req, res) => {
         merchantTransactionId: merchantTransactionId,
         merchantUserId: merchantUserId,
         amount: amount,
-        redirectUrl: FRONTEND_REDIRECT_URL, // User returns here after payment attempt
-        redirectMode: "POST", // Recommended for better handling on frontend
-        callbackUrl: BACKEND_CALLBACK_URL, // Server-to-server notification URL
-        mobileNumber: userPhoneNumber, // Pass user's phone number
+        redirectUrl: FRONTEND_REDIRECT_URL,
+        redirectMode: "POST",
+        callbackUrl: BACKEND_CALLBACK_URL,
+        mobileNumber: validatedPhoneNumber, // Use the validated phone number
         paymentInstrument: {
             type: "PAY_PAGE"
         }
+        // Consider adding email if required by your specific PhonePe setup:
+        // email: userEmail,
     };
+
+    // *** ADD DETAILED LOGGING OF THE PAYLOAD ***
+    console.log("[initiatePayment] PhonePe Payload (Before Encoding):", JSON.stringify(paymentPayload, null, 2));
+    // *********************************************
 
     // 3. Encode Payload and Calculate Checksum
     try {
@@ -91,14 +97,14 @@ exports.initiatePayment = async (req, res) => {
         const sha256Hash = crypto.createHash('sha256').update(stringToHash).digest('hex');
         const xVerifyChecksum = sha256Hash + '###' + PHONEPE_SALT_INDEX;
 
-        console.log("[initiatePayment] Calculated X-VERIFY Checksum.");
+        // *** LOG CHECKSUM FOR DEBUGGING (Remove in production) ***
+        console.log("[initiatePayment] Base64 Payload:", base64Payload);
+        console.log("[initiatePayment] String to Hash:", stringToHash); // Check if salt key is appended correctly
+        console.log("[initiatePayment] Calculated X-VERIFY Checksum:", xVerifyChecksum);
+        // ********************************************************
 
-        // 4. *** Optional: Save Initial Registration Data to Database ***
-        // Store user details, merchantTransactionId, status ('INITIATED'), amount etc.
-        // Link it to the authenticated user (req.user.id)
+        // 4. Optional: Save Initial Registration Data to Database (Placeholder)
         console.log("[initiatePayment] Placeholder: Save initial registration data to DB here.");
-        // Example: await db.Registrations.create({ userId: req.user.id, name, ...otherData, merchantTransactionId, status: 'INITIATED' });
-
 
         // 5. Make API Call to PhonePe
         const options = {
@@ -122,112 +128,64 @@ exports.initiatePayment = async (req, res) => {
         if (phonepeResponse.data?.success && phonepeResponse.data?.data?.instrumentResponse?.redirectInfo?.url) {
             const redirectUrl = phonepeResponse.data.data.instrumentResponse.redirectInfo.url;
             console.log("[initiatePayment] Payment initiation successful.");
-            // Send the redirect URL back to the frontend
             return res.status(200).json({ success: true, redirectUrl: redirectUrl });
         } else {
             console.error("[initiatePayment] PhonePe API indicated failure:", phonepeResponse.data);
             const errorMessage = phonepeResponse.data?.message || "PhonePe initiation failed.";
-            // *** Optional: Update DB status to FAILED ***
             return res.status(500).json({ success: false, message: errorMessage });
         }
 
     } catch (error) {
         console.error("[initiatePayment] Error during PhonePe interaction:", error.response?.data || error.message);
-        // *** Optional: Update DB status to FAILED ***
+        // Log the full error response if available
+        if (error.response) {
+             console.error("Error Response Status:", error.response.status);
+             console.error("Error Response Headers:", error.response.headers);
+             console.error("Error Response Data:", error.response.data);
+        }
         const errorMessage = error.response?.data?.message || "Could not initiate payment.";
         const statusCode = error.response?.status || 500;
         return res.status(statusCode).json({ success: false, message: errorMessage });
     }
 };
 
-
-/**
- * handleCallback
- * Handles the server-to-server callback from PhonePe after a payment attempt.
- * This route should NOT typically require user authentication.
- */
-exports.handleCallback = async (req, res) => { // Made async for potential DB operations
+// handleCallback function remains the same as before
+exports.handleCallback = async (req, res) => {
+    // ... (Keep the existing callback logic) ...
     console.log("[handleCallback] Received callback from PhonePe.");
-
-    // 1. Extract X-VERIFY header and base64 encoded response body
-    // Header names can sometimes be lowercase, check carefully
     const xVerifyHeader = req.headers['x-verify'] || req.headers['X-VERIFY'];
     const base64Response = req.body?.response;
-
     if (!xVerifyHeader || !base64Response) {
         console.error("[handleCallback] Invalid callback: Missing 'x-verify' header or 'response' body.");
-        return res.status(400).send('Invalid callback data received.'); // Respond clearly
+        return res.status(400).send('Invalid callback data received.');
     }
-
     console.log("[handleCallback] Received X-VERIFY Header:", xVerifyHeader);
-    // console.log("[handleCallback] Received Base64 Body:", base64Response); // Avoid logging potentially large body unless debugging
-
-    // 2. Verify the Checksum
     try {
         const saltKey = PHONEPE_SALT_KEY;
         const saltIndex = PHONEPE_SALT_INDEX;
         const stringToHash = base64Response + saltKey;
         const calculatedSha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
         const calculatedChecksum = calculatedSha256 + '###' + saltIndex;
-
         console.log("[handleCallback] Calculated Checksum:", calculatedChecksum);
-
         if (xVerifyHeader !== calculatedChecksum) {
             console.error("[handleCallback] Checksum mismatch! Request might be tampered.");
-            // Respond but do not process
             return res.status(400).send('Checksum verification failed.');
         }
-
         console.log("[handleCallback] Checksum verified successfully.");
-
-        // 3. Decode the Response
         const decodedResponse = JSON.parse(Buffer.from(base64Response, 'base64').toString('utf-8'));
-        // console.log("[handleCallback] Decoded Response:", decodedResponse); // Log if needed for debugging
-
-        // 4. Process Payment Status
         const merchantTransactionId = decodedResponse?.data?.merchantTransactionId;
-        const paymentState = decodedResponse?.code; // e.g., 'PAYMENT_SUCCESS', 'PAYMENT_ERROR'
+        const paymentState = decodedResponse?.code;
         const phonePeTransactionId = decodedResponse?.data?.transactionId;
-        const amount = decodedResponse?.data?.amount; // Amount in paisa
-
+        const amount = decodedResponse?.data?.amount;
         if (!merchantTransactionId || !paymentState) {
              console.error("[handleCallback] Invalid decoded response: Missing transaction ID or state code.");
              return res.status(400).send('Invalid response data content.');
         }
-
         console.log(`[handleCallback] Status for ${merchantTransactionId}: ${paymentState}, Amount: ${amount}`);
-
-        // 5. *** Update Your Database ***
-        // Find the order/registration using merchantTransactionId.
-        // IMPORTANT: Check if the transaction hasn't already been processed (idempotency).
-        // IMPORTANT: Verify the 'amount' received matches the expected amount for the transaction.
-        // Update status based on paymentState ('PAYMENT_SUCCESS', 'PAYMENT_FAILED', etc.)
-        console.log(`[handleCallback] Placeholder: Find registration for ${merchantTransactionId} in DB.`);
-        // Example:
-        // const registration = await db.Registrations.findOne({ merchantTransactionId });
-        // if (registration && registration.paymentStatus !== 'SUCCESS' && registration.amount * 100 === amount) {
-        //     registration.paymentStatus = paymentState === 'PAYMENT_SUCCESS' ? 'SUCCESS' : 'FAILED';
-        //     registration.phonePeTransactionId = phonePeTransactionId;
-        //     registration.paymentResponse = decodedResponse; // Store full response if needed
-        //     await registration.save();
-        //     console.log(`[handleCallback] Database updated for ${merchantTransactionId} to ${registration.paymentStatus}`);
-        // } else if (!registration) {
-        //      console.error(`[handleCallback] Registration not found for ${merchantTransactionId}`);
-        // } else if (registration.amount * 100 !== amount) {
-        //      console.error(`[handleCallback] Amount mismatch for ${merchantTransactionId}. Expected ${registration.amount * 100}, got ${amount}`);
-        // } else {
-        //     console.log(`[handleCallback] Transaction ${merchantTransactionId} already processed.`);
-        // }
-        console.log(`[handleCallback] Placeholder: Update DB status for ${merchantTransactionId} to ${paymentState}`);
-
-
-        // 6. Respond to PhonePe
-        // Acknowledge receipt. PhonePe doesn't typically use the response body.
-        return res.status(200).json({ message: "Callback received successfully" }); // Send JSON response
-
+        console.log(`[handleCallback] Placeholder: Update DB for ${merchantTransactionId} with status ${paymentState}`);
+        return res.status(200).json({ message: "Callback received successfully" });
     } catch (error) {
         console.error("[handleCallback] Error processing callback:", error);
-        // Respond with an error status to PhonePe
-        return res.status(500).json({ message: 'Error processing callback' }); // Send JSON response
+        return res.status(500).json({ message: 'Error processing callback' });
     }
 };

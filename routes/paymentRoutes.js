@@ -2,7 +2,7 @@
 // Defines payment related API routes and applies middleware.
 
 const express = require('express');
-const paymentController = require('../controllers/paymentController'); // Import the controller functions
+const paymentController = require('../controller/paymentController'); // Import the controller functions
 
 // Import your authentication middleware
 // Make sure the path is correct and it exports an 'auth' function
