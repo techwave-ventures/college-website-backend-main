@@ -9,7 +9,7 @@ const COOKIE_NAME = 'authToken';
 const JWT_SECRET = process.env.API_SECRET;
 
 exports.auth = async (req, res, next) => {
-    console.log("[Auth Middleware] Checking for cookie:", COOKIE_NAME);
+    // console.log("[Auth Middleware] Checking for cookie:", COOKIE_NAME);
 
     try {
         // *** CHANGE: Prioritize HTTP-only cookie ***
@@ -18,21 +18,21 @@ exports.auth = async (req, res, next) => {
         // const token = req.signedCookies?.[COOKIE_NAME]; // If using signed cookies
 
         if (!token) {
-            console.warn(`[Auth Middleware] Cookie '${COOKIE_NAME}' missing.`);
+            // console.warn(`[Auth Middleware] Cookie '${COOKIE_NAME}' missing.`);
             return res.status(401).json({ success: false, message: `Authentication required. Please log in.` });
         }
 
-        console.log(`[Auth Middleware] Found cookie '${COOKIE_NAME}'. Verifying...`);
+        // console.log(`[Auth Middleware] Found cookie '${COOKIE_NAME}'. Verifying...`);
 
         // Verify the token
         try {
             // Use the consistent secret name
             const decodedPayload = jwt.verify(token, JWT_SECRET);
-            console.log("[Auth Middleware] Token verified successfully. Payload:", decodedPayload);
+            // console.log("[Auth Middleware] Token verified successfully. Payload:", decodedPayload);
 
             // *** Ensure payload contains necessary info (like 'id' and 'accountType') ***
             if (!decodedPayload.id || !decodedPayload.accountType) {
-                 console.error("[Auth Middleware] Error: Decoded token payload missing 'id' or 'accountType'.");
+                //  console.error("[Auth Middleware] Error: Decoded token payload missing 'id' or 'accountType'.");
                  // Clear the invalid cookie
                  res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none', path: '/' });
                  return res.status(401).json({ success: false, message: "Token payload is invalid." });
@@ -44,7 +44,7 @@ exports.auth = async (req, res, next) => {
             next(); // Proceed
 
         } catch (jwtError) {
-            console.error("[Auth Middleware] JWT Verification Error:", jwtError.message);
+            // console.error("[Auth Middleware] JWT Verification Error:", jwtError.message);
             // Clear the invalid/expired cookie
             res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none', path: '/' });
             return res.status(401).json({
@@ -55,7 +55,7 @@ exports.auth = async (req, res, next) => {
         }
 
     } catch (error) {
-        console.error("[Auth Middleware] Unexpected Error:", error);
+        // console.error("[Auth Middleware] Unexpected Error:", error);
         return res.status(500).json({
             success: false,
             message: `Internal server error during authentication.`,

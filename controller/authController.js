@@ -152,14 +152,14 @@ exports.login = async (req, res) => {
               // signed: true // Uncomment if you are using signed cookies (requires COOKIE_SECRET in cookieParser)
           };
 
-          console.log("[Login Controller] Attempting to set cookie...");
-          console.log("[Login Controller] Token generated:", token ? "Yes (length: " + token.length + ")" : "No");
-          console.log("[Login Controller] Cookie Options:", JSON.stringify(cookieOptions, null, 2)); // Pretty print options
+          // console.log("[Login Controller] Attempting to set cookie...");
+          // console.log("[Login Controller] Token generated:", token ? "Yes (length: " + token.length + ")" : "No");
+          // console.log("[Login Controller] Cookie Options:", JSON.stringify(cookieOptions, null, 2)); // Pretty print options
 
            // Use a consistent cookie name, e.g., 'authToken'
           res.cookie('authToken', token, cookieOptions);
 
-          console.log("[Login Controller] res.cookie('authToken', ...) executed.");
+          // console.log("[Login Controller] res.cookie('authToken', ...) executed.");
 
           // *** CHANGE: Send success response WITHOUT the token in the body ***
           res.status(200).json({
@@ -185,7 +185,7 @@ exports.login = async (req, res) => {
 
 // *** ADD: Logout Controller ***
 exports.logout = (req, res) => {
-   console.log("[Logout Controller] Attempting to clear authToken cookie...");
+  //  console.log("[Logout Controller] Attempting to clear authToken cookie...");
    try {
        // Clear the cookie by setting its expiration date to the past
        const cookieOptions = {
@@ -209,10 +209,10 @@ exports.logout = (req, res) => {
       //     // domain: 'yourdomain.com'
       // });
 
-      console.log("[Logout Controller] authToken cookie cleared.");
+      // console.log("[Logout Controller] authToken cookie cleared.");
       res.status(200).json({ success: true, message: "Logout successful" });
   } catch (error) {
-      console.error("[Logout Controller] Error clearing cookie:", error);
+      // console.error("[Logout Controller] Error clearing cookie:", error);
        // Even if clearing fails on server (unlikely), still send success as client state should reset
        res.status(500).json({ success: false, message: "Logout failed on server." });
   }
@@ -223,6 +223,6 @@ exports.logout = (req, res) => {
 exports.checkAuthStatus = async (req, res) => {
   // This controller only runs if the 'auth' middleware before it was successful
   // The 'auth' middleware attaches req.user
-   console.log("[checkAuthStatus] User is authenticated:", req.user?.email);
+  //  console.log("[checkAuthStatus] User is authenticated:", req.user?.email);
   res.status(200).json({ isAuthenticated: true, user: req.user });
 };

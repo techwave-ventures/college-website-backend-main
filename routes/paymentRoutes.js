@@ -14,7 +14,7 @@ const router = express.Router();
 // POST /apiv1/register-and-pay
 // This route requires the user to be authenticated.
 router.post(
-    '/register-and-pay',
+    '/initiate-plan',
     auth, // Apply the authentication middleware first
     paymentController.initiatePayment // If auth passes, call the controller function
 );
@@ -26,8 +26,11 @@ router.post(
 // It should generally NOT have user authentication middleware (auth).
 // PhonePe verifies the request using the X-VERIFY header checksum.
 router.post(
-    '/payment/callback',
+    '/callback',
     paymentController.handleCallback // Directly call the callback handler
 );
+
+// Check status (Protected)
+router.get('/status/:merchantTransactionId', auth, paymentController.checkPaymentStatus);
 
 module.exports = router; // Export the router
