@@ -2,7 +2,8 @@
 
 const User = require("../modules/userModule"); // Adjust path to your User model
 const paymentController = require('../controller/paymentController'); // Import the controller functions
-const PLANS = require('../config/plans'); // Adjust path to your plans config
+// const PLANS = require('../config/plans'); // Adjust path to your plans config
+const { PLANS } = require('../config/plans'); // Adjust path to your plans config
 
 
 /**
