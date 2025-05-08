@@ -1,36 +1,44 @@
-// routes/paymentRoutes.js
-// Defines payment related API routes and applies middleware.
+// File: routes/paymentRoutes.js
 
 const express = require('express');
-const paymentController = require('../controller/paymentController'); // Import the controller functions
+const paymentController = require('../controller/paymentController'); // Import the updated controller
 
 // Import your authentication middleware
-// Make sure the path is correct and it exports an 'auth' function
-const { auth } = require('../middleware/authMiddleware'); // Assuming it's named authMiddleware.js
+const { auth } = require('../middleware/authMiddleware'); // Adjust path if needed
 
 const router = express.Router();
 
-// --- Payment Initiation Route ---
-// POST /apiv1/register-and-pay
-// This route requires the user to be authenticated.
+// --- Razorpay Order Initiation Route ---
+// POST /apiv1/payments/initiate-plan
+// Requires user authentication to know who is paying and potentially prefill data.
 router.post(
     '/initiate-plan',
-    auth, // Apply the authentication middleware first
-    paymentController.initiatePayment // If auth passes, call the controller function
+    auth, // Apply authentication middleware
+    paymentController.initiateRazorpayOrder // Use the new Razorpay order function
 );
 
-
-// --- PhonePe Callback Route ---
-// POST /apiv1/payment/callback
-// This route is called directly by PhonePe's servers.
-// It should generally NOT have user authentication middleware (auth).
-// PhonePe verifies the request using the X-VERIFY header checksum.
+// --- Razorpay Payment Verification Route ---
+// POST /apiv1/payments/verify-razorpay
+// Requires user authentication to link the payment to the logged-in user.
 router.post(
-    '/callback',
-    paymentController.handleCallback // Directly call the callback handler
+    '/verify-razorpay',
+    auth, // Apply authentication middleware
+    paymentController.verifyRazorpayPayment // Use the new Razorpay verification function
 );
 
-// Check status (Protected)
-router.get('/status/:merchantTransactionId', auth, paymentController.checkPaymentStatus);
+// --- Razorpay Webhook Handler Route ---
+// POST /apiv1/payments/razorpay-webhook
+// This route MUST be public (no 'auth' middleware) as it's called by Razorpay servers.
+// Security is handled by verifying the 'x-razorpay-signature' header.
+router.post(
+    '/razorpay-webhook',
+    paymentController.handleRazorpayWebhook // Use the new Razorpay webhook handler
+);
+
+
+// --- Remove Old PhonePe Routes ---
+// router.post('/callback', paymentController.handleCallback); // REMOVED
+// router.get('/status/:merchantTransactionId', auth, paymentController.checkPaymentStatus); // REMOVED
+
 
 module.exports = router; // Export the router
