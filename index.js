@@ -23,6 +23,7 @@ const branchRouter = require("./routes/branchRoutes");
 const examRouter = require("./routes/examRoutes");
 const imageRouter = require("./routes/imageRoutes");
 const paymentRouter = require("./routes/paymentRoutes");
+const geminiRouter = require("./routes/geminiRoutes"); // Import Gemini router
 const toolsRouter = require("./routes/toolsRoutes"); // Import tools router
 // Add other routers if needed
 
@@ -94,6 +95,7 @@ app.use("/apiv1/branch", branchRouter);
 app.use("/apiv1/exam", examRouter);
 app.use("/apiv1/image", imageRouter);
 app.use("/apiv1/payments", paymentRouter); // Payment routes
+app.use("/apiv1/gemini", geminiRouter); // Gemini routes
 app.use("/apiv1/tools", toolsRouter); // Tools routes
 
 // Add other routes here
