@@ -22,9 +22,9 @@ if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
         key_id: RAZORPAY_KEY_ID,
         key_secret: RAZORPAY_KEY_SECRET
     });
-    console.log("[Razorpay] Client instantiated successfully.");
+    // console.log("[Razorpay] Client instantiated successfully.");
 } else {
-    console.error("[Razorpay] FATAL ERROR: Razorpay Key ID or Key Secret is missing in environment variables. Payment initiation will fail.");
+    // console.error("[Razorpay] FATAL ERROR: Razorpay Key ID or Key Secret is missing in environment variables. Payment initiation will fail.");
     // Optionally handle this more gracefully, maybe prevent server start
 }
 
@@ -38,29 +38,29 @@ if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
  * @body    { "planId": "pro", "userId": "...", "amount": ... } // Frontend sends planId, userId, amount
  */
 exports.initiateRazorpayOrder = async (req, res) => {
-    console.log("[initiateRazorpayOrder] Request received for user:", req.user?.email);
+    // console.log("[initiateRazorpayOrder] Request received for user:", req.user?.email);
 
     // 1. Get User ID and Input Validation
     const userId = req.user?.id; // Provided by auth middleware
     if (!userId) {
-        console.error("[initiateRazorpayOrder] Auth Error: User ID missing.");
+        // console.error("[initiateRazorpayOrder] Auth Error: User ID missing.");
         return res.status(401).json({ success: false, message: "Authentication required." });
     }
 
     const { planId } = req.body; // Frontend should send the chosen plan ID
     if (!planId) {
-        console.error("[initiateRazorpayOrder] Validation Failed: Missing planId.");
+        // console.error("[initiateRazorpayOrder] Validation Failed: Missing planId.");
         return res.status(400).json({ success: false, message: "Plan ID is required." });
     }
 
     // 2. Retrieve Plan Details & Verify Amount
     const planDetails = PLANS[planId];
     if (!planDetails) {
-        console.error(`[initiateRazorpayOrder] Validation Failed: Invalid planId: ${planId}`);
+        // console.error(`[initiateRazorpayOrder] Validation Failed: Invalid planId: ${planId}`);
         return res.status(400).json({ success: false, message: "Invalid plan selected." });
     }
     if (planDetails.amount <= 0 || planId === 'starter') {
-        console.warn(`[initiateRazorpayOrder] Attempt to initiate payment for free/zero amount plan: ${planId}`);
+        // console.warn(`[initiateRazorpayOrder] Attempt to initiate payment for free/zero amount plan: ${planId}`);
         return res.status(400).json({ success: false, message: "Cannot initiate payment for a free plan." });
     }
 
@@ -68,11 +68,11 @@ exports.initiateRazorpayOrder = async (req, res) => {
     const planName = planDetails.name;
     const currency = "INR"; // Assuming INR
 
-    console.log(`[initiateRazorpayOrder] User ${userId} initiating order for Plan: ${planName} (${planId}), Amount: ${paymentAmountPaisa} paisa`);
+    // console.log(`[initiateRazorpayOrder] User ${userId} initiating order for Plan: ${planName} (${planId}), Amount: ${paymentAmountPaisa} paisa`);
 
     // 3. Check Razorpay Credentials (Instance Check)
     if (!razorpayInstance) {
-        console.error("[initiateRazorpayOrder] Server Configuration Error: Razorpay client not instantiated.");
+        // console.error("[initiateRazorpayOrder] Server Configuration Error: Razorpay client not instantiated.");
         return res.status(500).json({ success: false, message: "Payment gateway configuration error." });
     }
 
@@ -92,9 +92,9 @@ exports.initiateRazorpayOrder = async (req, res) => {
 
     // 5. Create Razorpay Order
     try {
-        console.log("[initiateRazorpayOrder] Creating Razorpay order with options:", options);
+        // console.log("[initiateRazorpayOrder] Creating Razorpay order with options:", options);
         const order = await razorpayInstance.orders.create(options);
-        console.log("[initiateRazorpayOrder] Razorpay Order Created:", order);
+        // console.log("[initiateRazorpayOrder] Razorpay Order Created:", order);
 
         if (!order || !order.id) {
             throw new Error("Failed to create Razorpay order or order ID missing.");
@@ -109,7 +109,7 @@ exports.initiateRazorpayOrder = async (req, res) => {
                 paymentTransactionId: receiptId, // Use your receipt ID or order.id as reference
                 counselingPlan: planId // Associate the plan being paid for
             });
-            console.log(`[initiateRazorpayOrder] User ${userId} DB updated: Status Pending, OrderID ${order.id} linked (via receipt/notes).`);
+            // console.log(`[initiateRazorpayOrder] User ${userId} DB updated: Status Pending, OrderID ${order.id} linked (via receipt/notes).`);
         } catch (dbError) {
             console.error(`[initiateRazorpayOrder] DB Error updating user ${userId} after order creation:`, dbError);
             // Proceed with payment, but log the error. Handle potential inconsistencies later.
@@ -149,7 +149,7 @@ exports.initiateRazorpayOrder = async (req, res) => {
  * @body    { razorpay_order_id, razorpay_payment_id, razorpay_signature }
  */
 exports.verifyRazorpayPayment = async (req, res) => {
-    console.log("[verifyRazorpayPayment] Request received for user:", req.user?.email);
+    // console.log("[verifyRazorpayPayment] Request received for user:", req.user?.email);
 
     const userId = req.user?.id;
     if (!userId) {
@@ -174,12 +174,12 @@ exports.verifyRazorpayPayment = async (req, res) => {
             .update(bodyString)
             .digest('hex');
 
-        console.log(`[verifyRazorpayPayment] Received Signature: ${razorpay_signature}`);
-        console.log(`[verifyRazorpayPayment] Expected Signature: ${expectedSignature}`);
+        // console.log(`[verifyRazorpayPayment] Received Signature: ${razorpay_signature}`);
+        // console.log(`[verifyRazorpayPayment] Expected Signature: ${expectedSignature}`);
 
         // 3. Compare Signatures
         if (expectedSignature === razorpay_signature) {
-            console.log(`[verifyRazorpayPayment] Signature VALID for Order ID: ${razorpay_order_id}`);
+            // console.log(`[verifyRazorpayPayment] Signature VALID for Order ID: ${razorpay_order_id}`);
 
             // --- Update User Record on Successful Verification ---
             try {
@@ -208,12 +208,12 @@ exports.verifyRazorpayPayment = async (req, res) => {
                     // userToUpdate.razorpay_payment_id = razorpay_payment_id;
 
                     await userToUpdate.save();
-                    console.log(`[verifyRazorpayPayment] User ${userId} DB updated: Status Completed, Plan ${planId} activated, Usage reset.`);
+                    // console.log(`[verifyRazorpayPayment] User ${userId} DB updated: Status Completed, Plan ${planId} activated, Usage reset.`);
 
                     return res.status(200).json({ success: true, message: "Payment verified successfully. Plan activated." });
 
                 } else {
-                    console.log(`[verifyRazorpayPayment] Payment for Order ID: ${razorpay_order_id} already marked as Completed for user ${userId}.`);
+                    // console.log(`[verifyRazorpayPayment] Payment for Order ID: ${razorpay_order_id} already marked as Completed for user ${userId}.`);
                      return res.status(200).json({ success: true, message: "Payment already verified." });
                 }
 
@@ -246,7 +246,7 @@ exports.handleRazorpayWebhook = async (req, res) => {
     const receivedSignature = req.headers['x-razorpay-signature'];
     const requestBody = JSON.stringify(req.body); // Use raw body if possible from framework/middleware
 
-    console.log("[handleRazorpayWebhook] Received webhook.");
+    // console.log("[handleRazorpayWebhook] Received webhook.");
     // console.log("[handleRazorpayWebhook] Body:", requestBody);
     // console.log("[handleRazorpayWebhook] Signature:", receivedSignature);
 
@@ -267,7 +267,7 @@ exports.handleRazorpayWebhook = async (req, res) => {
             .digest('hex');
 
         if (expectedSignature === receivedSignature) {
-            console.log("[handleRazorpayWebhook] Webhook signature VERIFIED.");
+            // console.log("[handleRazorpayWebhook] Webhook signature VERIFIED.");
             const event = req.body.event;
             const payload = req.body.payload;
 
@@ -281,7 +281,7 @@ exports.handleRazorpayWebhook = async (req, res) => {
                 const notes = paymentEntity.notes || {}; // Access notes if present
                 const userIdFromNotes = notes.userId; // Get userId from notes stored during order creation
 
-                console.log(`[handleRazorpayWebhook] Event: ${event}, OrderID: ${orderId}, PaymentID: ${paymentId}, Status: ${status}, Amount: ${amount}, UserID (from Notes): ${userIdFromNotes}`);
+                // console.log(`[handleRazorpayWebhook] Event: ${event}, OrderID: ${orderId}, PaymentID: ${paymentId}, Status: ${status}, Amount: ${amount}, UserID (from Notes): ${userIdFromNotes}`);
 
                 if (status === 'captured' && userIdFromNotes) {
                     // --- Update User Record based on Webhook ---
@@ -300,9 +300,9 @@ exports.handleRazorpayWebhook = async (req, res) => {
                                 userToUpdate.prefListGenerationsUsed = 0; // Reset usage
                                 // userToUpdate.razorpay_payment_id = paymentId; // Store payment ID
                                 await userToUpdate.save();
-                                console.log(`[handleRazorpayWebhook] User ${userIdFromNotes} updated via webhook: Status Completed, Plan ${planId} activated, Usage reset.`);
+                                // console.log(`[handleRazorpayWebhook] User ${userIdFromNotes} updated via webhook: Status Completed, Plan ${planId} activated, Usage reset.`);
                             } else {
-                                console.log(`[handleRazorpayWebhook] Payment for Order ${orderId} already marked Completed for user ${userIdFromNotes}. Webhook redundant.`);
+                                // console.log(`[handleRazorpayWebhook] Payment for Order ${orderId} already marked Completed for user ${userIdFromNotes}. Webhook redundant.`);
                             }
                          } else {
                              console.error(`[handleRazorpayWebhook] AMOUNT MISMATCH for Order ${orderId}. Expected: ${expectedPlanDetails?.amount}, Received: ${amount}. User status not updated.`);

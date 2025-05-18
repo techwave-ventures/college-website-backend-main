@@ -45,7 +45,7 @@ exports.searchCollegeImagesGoogle = async (req, res) => {
     // You can also experiment with imgSize (e.g., imgSize=medium or imgSize=large)
     // --- END MODIFICATION ---
 
-    console.log(`[searchCollegeImagesGoogle] Searching Google Images for: "${searchQuery}" with URL: ${searchUrl}`);
+    // console.log(`[searchCollegeImagesGoogle] Searching Google Images for: "${searchQuery}" with URL: ${searchUrl}`);
 
     try {
         const googleApiResponse = await axios.get(searchUrl);
@@ -58,17 +58,17 @@ exports.searchCollegeImagesGoogle = async (req, res) => {
                 mime: item.mime // Include mime type
             })).filter(image => image.imageUrl && (image.mime === 'image/jpeg' || image.mime === 'image/png' || image.mime === 'image/webp')); // Filter for common web image types
 
-            console.log(`[searchCollegeImagesGoogle] Found and filtered ${images.length} images for "${collegeName}".`);
+            // console.log(`[searchCollegeImagesGoogle] Found and filtered ${images.length} images for "${collegeName}".`);
             if (images.length === 0) {
-                 console.log(`[searchCollegeImagesGoogle] No suitable image types (jpeg, png, webp) found for "${collegeName}" after filtering.`);
+                //  console.log(`[searchCollegeImagesGoogle] No suitable image types (jpeg, png, webp) found for "${collegeName}" after filtering.`);
             }
             return res.status(200).json({ success: true, images: images });
         } else {
-            console.log(`[searchCollegeImagesGoogle] No items found in Google API response for "${collegeName}". Response:`, googleApiResponse.data);
+            // console.log(`[searchCollegeImagesGoogle] No items found in Google API response for "${collegeName}". Response:`, googleApiResponse.data);
             return res.status(200).json({ success: true, images: [] }); // Success, but no images
         }
     } catch (error) {
-        console.error('[searchCollegeImagesGoogle] Error fetching images from Google Custom Search API:', error.response?.data?.error || error.message);
+        // console.error('[searchCollegeImagesGoogle] Error fetching images from Google Custom Search API:', error.response?.data?.error || error.message);
         let errorMessage = 'Failed to fetch images from Google due to a server error.';
         if (error.response?.data?.error?.message) {
             errorMessage = `Google API Error: ${error.response.data.error.message}`;
@@ -115,7 +115,7 @@ exports.searchCollegeVideosYouTube = async (req, res) => {
     // Fetch a few relevant videos, focusing on video type.
     const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&maxResults=3&key=${YOUTUBE_API_KEY}`;
 
-    console.log(`[searchCollegeVideosYouTube] Searching YouTube for: "${searchQuery}"`);
+    // console.log(`[searchCollegeVideosYouTube] Searching YouTube for: "${searchQuery}"`);
 
     try {
         const youtubeApiResponse = await axios.get(searchUrl);
@@ -129,14 +129,14 @@ exports.searchCollegeVideosYouTube = async (req, res) => {
                 channelTitle: item.snippet.channelTitle,
                 publishedAt: item.snippet.publishedAt,
             }));
-            console.log(`[searchCollegeVideosYouTube] Found ${videos.length} videos for "${collegeName}".`);
+            // console.log(`[searchCollegeVideosYouTube] Found ${videos.length} videos for "${collegeName}".`);
             return res.status(200).json({ success: true, videos: videos });
         } else {
-            console.log(`[searchCollegeVideosYouTube] No videos found or unexpected YouTube API response for "${collegeName}".`);
+            // console.log(`[searchCollegeVideosYouTube] No videos found or unexpected YouTube API response for "${collegeName}".`);
             return res.status(200).json({ success: true, videos: [] }); // Success, but no videos
         }
     } catch (error) {
-        console.error('[searchCollegeVideosYouTube] Error fetching videos from YouTube Data API:', error.response?.data?.error || error.message);
+        // console.error('[searchCollegeVideosYouTube] Error fetching videos from YouTube Data API:', error.response?.data?.error || error.message);
         let errorMessage = 'Failed to fetch videos from YouTube due to a server error.';
         if (error.response?.data?.error?.message) {
             errorMessage = `YouTube API Error: ${error.response.data.error.message}`;

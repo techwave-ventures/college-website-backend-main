@@ -80,7 +80,7 @@ exports.updatecollege = async (req, res) => {
         // --- Manually update slug if name is changing ---
         if (incomingData.name) {
             incomingData.slug = slugify(incomingData.name, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
-            console.log(`[updatecollege] Generated new slug: ${incomingData.slug} for name: ${incomingData.name}`);
+            // console.log(`[updatecollege] Generated new slug: ${incomingData.slug} for name: ${incomingData.name}`);
         }
         // --- End Manual Slug Update ---
 
@@ -89,7 +89,7 @@ exports.updatecollege = async (req, res) => {
             const courseObjectIds = [];
             for (const courseData of incomingData.courses) {
                 if (!courseData.name || !courseData.duration) {
-                    console.warn("[updatecollege] Skipping a course due to missing name or duration:", courseData);
+                    // console.warn("[updatecollege] Skipping a course due to missing name or duration:", courseData);
                     continue;
                 }
 
@@ -98,7 +98,7 @@ exports.updatecollege = async (req, res) => {
                 if (courseData.branches && Array.isArray(courseData.branches)) {
                     for (const branchData of courseData.branches) {
                         if (!branchData.bName) {
-                            console.warn("[updatecollege] Skipping a branch due to missing bName:", branchData);
+                            // console.warn("[updatecollege] Skipping a branch due to missing bName:", branchData);
                             continue;
                         }
                         // For cutoffs, the schema expects ObjectIds.
@@ -135,7 +135,7 @@ exports.updatecollege = async (req, res) => {
                 if (courseData.fees && Array.isArray(courseData.fees)) {
                     for (const feeData of courseData.fees) {
                         if (!feeData.category || typeof feeData.amt === 'undefined') {
-                            console.warn("[updatecollege] Skipping a fee due to missing category or amount:", feeData);
+                            // console.warn("[updatecollege] Skipping a fee due to missing category or amount:", feeData);
                             continue;
                         }
                         let feeDoc = await Fee.findOneAndUpdate(
@@ -182,7 +182,7 @@ exports.updatecollege = async (req, res) => {
             incomingData.courses = courseObjectIds; // Replace array of objects with array of ObjectIds
         }
 
-        console.log(`[updatecollege] Attempting to update college ${collegeId} with processed data:`, JSON.stringify(incomingData, null, 2));
+        // console.log(`[updatecollege] Attempting to update college ${collegeId} with processed data:`, JSON.stringify(incomingData, null, 2));
 
         const updatedCollege = await collegeModule.findByIdAndUpdate(
             collegeId,
@@ -203,11 +203,11 @@ exports.updatecollege = async (req, res) => {
             return res.status(404).json({ success: false, message: "College not found" });
         }
 
-        console.log(`[updatecollege] College ${collegeId} updated successfully in DB.`);
+        // console.log(`[updatecollege] College ${collegeId} updated successfully in DB.`);
         return res.status(200).json({ success: true, message: "College updated", college: updatedCollege });
 
     } catch (err) {
-        console.error("[updatecollege] Update college error:", err);
+        // console.error("[updatecollege] Update college error:", err);
         if (err.code === 11000) {
             return res.status(409).json({ success: false, message: `Update failed. DTE Code might already exist.` });
         }
@@ -215,7 +215,7 @@ exports.updatecollege = async (req, res) => {
             return res.status(400).json({ success: false, message: "Validation Error", errors: err.errors });
         }
         if (err.name === 'CastError') {
-            console.error("[updatecollege] Casting error. Path:", err.path, "Value:", err.value);
+            // console.error("[updatecollege] Casting error. Path:", err.path, "Value:", err.value);
             return res.status(400).json({ success: false, message: `Invalid data format for field '${err.path}': ${err.reason?.message || err.message}`});
         }
         return res.status(500).json({ success: false, error: err.message, message: "Failed to update college" });
