@@ -5,7 +5,7 @@ const { PLANS } = require('../config/plans'); // Adjust path as needed
 const User = require('../modules/userModule'); // Adjust path as needed
 
 // External Generator API URL (from your frontend code)
-const EXTERNAL_GENERATOR_URL = 'https://pref-list-new.onrender.com/preference-list';
+const EXTERNAL_GENERATOR_URL = 'https://pref-list-new-of9z.onrender.com/preference-list';
 
 // Branch cluster data (needed to expand clusters on backend)
 // IMPORTANT: Keep this consistent with the frontend definition
