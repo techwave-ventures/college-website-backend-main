@@ -6,7 +6,7 @@ const MONGODB_URL = process.env.MONGODB_URL;
 
 exports.connect = () => {
     if (!MONGODB_URL) {
-        console.error("FATAL ERROR: MONGODB_URI environment variable is not set.");
+        console.error("FATAL ERROR: MONGODB_URL environment variable is not set.");
         process.exit(1);
     }
     mongoose.connect(MONGODB_URL, {

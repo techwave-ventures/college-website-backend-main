@@ -10,11 +10,17 @@
  */
 const PLANS = {
     // Corresponds to the 'starter' plan in Pricing.jsx
-    'starter': {
-      name: 'Starter Pack',
+    'free': {
+      name: 'Free',
       collegeListGeneratorLimit: 3, // From "Basic College List Generator (5 Uses)"
       priceId: null, // Free plan doesn't need a payment gateway price ID for charging
       amount: 0, // From frontend amount
+    },
+    'starter': {
+      name: 'Starter Pack',
+      collegeListGeneratorLimit: 3, // From "Basic College List Generator (5 Uses)"
+      priceId: 'price_starter_1', // Free plan doesn't need a payment gateway price ID for charging
+      amount: 100, // From frontend amount
     },
     // Corresponds to the 'pro' plan in Pricing.jsx
     'pro': {

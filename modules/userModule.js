@@ -72,6 +72,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
       required: true, // Ensures the field always exists for incrementing
     },
+
+    collegeListGenerationLimit: { // Renamed for clarity based on PLANS config
+      type: Number,
+      default: 0,
+      required: true, // Ensures the field always exists for incrementing
+    },
     // --- End New Fields ---
   },
   { timestamps: true } // Keeps createdAt and updatedAt

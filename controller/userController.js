@@ -90,10 +90,10 @@ exports.getUserPlanDetails = async (req, res) => {
             planName = planDetailsFromConfig.name; // Use name from config for consistency
         } else {
             // console.warn(`[getUserPlanDetails] User ${userId} has invalid or null planId: ${planId}`);
-            // If planId is null or invalid, check if it should default to 'starter' details
-            if (PLANS['starter']) {
-                 limit = PLANS['starter'].collegeListGeneratorLimit;
-                 planName = PLANS['starter'].name;
+            // If planId is null or invalid, check if it should default to 'free' details
+            if (PLANS['free']) {
+                 limit = PLANS['free'].collegeListGeneratorLimit;
+                 planName = PLANS['free'].name;
             }
         }
 
@@ -110,14 +110,14 @@ exports.getUserPlanDetails = async (req, res) => {
             },
             // *************************************
             plan: {
-                id: planId || 'starter', // Default to starter if null
+                id: planId || 'free', // Default to free if null
                 name: planName, // Use name derived from config or default
                 status: user.paymentStatus,
                 activationDate: user.planActivationDate,
             },
             usage: {
                 collegeListGenerationsUsed: user.collegeListGenerationsUsed ?? 0, // Default to 0 if undefined
-                collegeListGenerationLimit: limit,
+                collegeListGenerationLimit: user.collegeListGenerationLimit ?? 0,
             }
         };
 
