@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     counselingPlan: {
       type: String,
       enum: validPlanIds, // Use actual plan IDs from your config + null
-      default: 'starter', // Default new users to the 'starter' (free) plan
+      default: 'free', // Default new users to the 'free' plan
     },
 
     /**
