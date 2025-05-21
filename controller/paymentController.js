@@ -59,7 +59,7 @@ exports.initiateRazorpayOrder = async (req, res) => {
         // console.error(`[initiateRazorpayOrder] Validation Failed: Invalid planId: ${planId}`);
         return res.status(400).json({ success: false, message: "Invalid plan selected." });
     }
-    if (planDetails.amount <= 0 || planId === 'starter') {
+    if (planDetails.amount <= 0 || planId === 'free') {
         // console.warn(`[initiateRazorpayOrder] Attempt to initiate payment for free/zero amount plan: ${planId}`);
         return res.status(400).json({ success: false, message: "Cannot initiate payment for a free plan." });
     }
