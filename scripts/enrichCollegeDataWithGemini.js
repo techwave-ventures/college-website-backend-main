@@ -15,8 +15,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 // --- Configuration ---
 // API_BASE_URL should point to your running backend instance
 const API_BASE_URL = process.env.API_BASE_URL_INTERNAL || "https://backend.campussathi.in/apiv1";
-const GEMINI_API_KEY = "AIzaSyC0iWq11txMrvF8-Lg7HP0-dNVTuAsBkxk"; // Load from environment variable
-const MONGODB_URI = process.env.MONGODB_URI; // Load from environment variable
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Load from environment variable
+const MONGODB_URI = process.env.MONGODB_URL; // Load from environment variable
 const BACKEND_AUTH_TOKEN = process.env.YOUR_BACKEND_AUTH_TOKEN_FOR_SCRIPT;
 
 // Initialize Gemini Client
@@ -87,7 +87,7 @@ async function uploadImageToBackend(imageBuffer, originalFileName) {
 }
 
 async function enrichCollegeData(collegeIdentifier) {
-    if (!"mongodb+srv://autivishal10:FYfCAPxCVz0rR783@cluster0.aw2kp.mongodb.net/college_backend_test?retryWrites=true&w=majority&appName=Cluster0") { // Check for MONGODB_URI
+    if (!MONGODB_URI) { // Check for MONGODB_URI
         console.error("MONGODB_URI not found in environment variables.");
         process.exit(1);
     }
@@ -100,7 +100,7 @@ async function enrichCollegeData(collegeIdentifier) {
 
     try {
         console.log('Connecting to MongoDB...');
-        await mongoose.connect("mongodb+srv://autivishal10:FYfCAPxCVz0rR783@cluster0.aw2kp.mongodb.net/college_backend_test?retryWrites=true&w=majority&appName=Cluster0"); // Use MONGODB_URI from env
+        await mongoose.connect(MONGODB_URI); // Use MONGODB_URI from env
         console.log('MongoDB Connected Successfully.');
 
         let existingCollege;
