@@ -8,9 +8,7 @@ const path = require('path');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const dotenv = require('dotenv');
 const College = require('../modules/collegeModule'); // Adjust path
-
-// Load environment variables from .env file in the parent directory
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config(); // Load environment variables from .env file
 
 // --- Configuration ---
 // API_BASE_URL should point to your running backend instance
