@@ -26,6 +26,14 @@ router.post(
     paymentController.verifyRazorpayPayment // Use the new Razorpay verification function
 );
 
+
+// 
+router.post(
+    '/buy-limit',
+    auth,
+    paymentController.buyAdditionalLimit
+);
+
 // --- Razorpay Webhook Handler Route ---
 // POST /apiv1/payments/razorpay-webhook
 // This route MUST be public (no 'auth' middleware) as it's called by Razorpay servers.
@@ -34,6 +42,8 @@ router.post(
     '/razorpay-webhook',
     paymentController.handleRazorpayWebhook // Use the new Razorpay webhook handler
 );
+
+
 
 
 // --- Remove Old PhonePe Routes ---

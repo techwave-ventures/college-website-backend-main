@@ -73,10 +73,14 @@ const userSchema = new mongoose.Schema(
       required: true, // Ensures the field always exists for incrementing
     },
 
-    collegeListGenerationLimit: { // Renamed for clarity based on PLANS config
-      type: Number,
-      default: 0,
-      required: true, // Ensures the field always exists for incrementing
+    collegeListGenerationLimit: {
+        type: Number,
+        default: 0,
+        min: 0,
+        validate: {
+            validator: Number.isInteger,
+            message: '{VALUE} is not an integer value'
+        }
     },
     // --- End New Fields ---
   },

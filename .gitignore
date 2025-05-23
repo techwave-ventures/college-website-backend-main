@@ -4,3 +4,4 @@ package-lock.json
 app.yaml
 getEnv.js
 .gcloudignore
+/scripts/*.*

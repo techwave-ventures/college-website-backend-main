@@ -69,7 +69,7 @@ exports.getUserPlanDetails = async (req, res) => {
     try {
         // 1. Fetch necessary user data - ADD name and email
         const user = await User.findById(userId)
-            .select('name email counselingPlan paymentStatus collegeListGenerationsUsed planActivationDate') // Added name, email
+            .select('name email counselingPlan paymentStatus collegeListGenerationsUsed collegeListGenerationLimit planActivationDate') // Added name, email
             .lean(); // Use .lean() for faster, plain JS objects
 
         if (!user) {
