@@ -94,7 +94,7 @@ exports.buyAdditionalLimit = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         const order = await razorpayInstance.orders.create({
-            amount: 10000,
+            amount: 100,
             currency: "INR",
             receipt: `limit_${user.id.slice(-6)}_${Date.now()}`,
             notes: {
