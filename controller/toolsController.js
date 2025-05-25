@@ -92,7 +92,7 @@ exports.generatePreferenceList = async (req, res) => {
         }
 
         // 3. Check Usage Limit
-        const limit = planDetails.collegeListGeneratorLimit; // Get limit from PLANS config
+        const limit = user.collegeListGenerationLimit; // Get limit from PLANS config
         const currentUsage = user.collegeListGenerationsUsed;
 
         // console.log(`[generatePreferenceList] User ${userId}, Plan: ${planId}, Usage: ${currentUsage}/${limit}`);
