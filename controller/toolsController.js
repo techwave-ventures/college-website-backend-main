@@ -67,7 +67,7 @@ exports.generatePreferenceList = async (req, res) => {
     try {
         // 2. Fetch User and Check Plan/Status
         const user = await User.findById(userId)
-            .select('counselingPlan paymentStatus collegeListGenerationsUsed')
+            .select('counselingPlan paymentStatus collegeListGenerationsUsed collegeListGenerationLimit') // Select only necessary fields
             .lean(); // Use lean for read-only operations
 
         if (!user) {
@@ -99,7 +99,7 @@ exports.generatePreferenceList = async (req, res) => {
 
         if (currentUsage >= limit) {
             // console.warn(`[generatePreferenceList] User ${userId} reached usage limit (${currentUsage}/${limit}) for plan ${planId}. Access denied.`);
-            return res.status(403).json({ success: false, message: `You have reached the usage limit (${limit}) for the College List Generator on your '${planDetails.name}' plan.` });
+            return res.status(403).json({ success: false, message: `You have reached the usage limit (${limit}) for the College List Generator` });
         }
 
         // 4. Prepare Data for External API
