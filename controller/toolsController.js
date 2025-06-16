@@ -86,7 +86,7 @@ exports.generatePreferenceList = async (req, res) => {
 
         // Check payment status for paid plans
         // Allow 'starter' plan regardless of paymentStatus (which should be null anyway)
-        if (planId !== 'starter' && user.paymentStatus !== 'Completed') {
+        if (planId !== 'free' && user.paymentStatus !== 'Completed') {
             // console.warn(`[generatePreferenceList] User ${userId} plan (${planId}) is not active (Status: ${user.paymentStatus}). Access denied.`);
             return res.status(403).json({ success: false, message: `Your '${planDetails.name}' plan is not active. Please complete payment or contact support.` });
         }
@@ -99,7 +99,7 @@ exports.generatePreferenceList = async (req, res) => {
 
         if (currentUsage >= limit) {
             // console.warn(`[generatePreferenceList] User ${userId} reached usage limit (${currentUsage}/${limit}) for plan ${planId}. Access denied.`);
-            return res.status(403).json({ success: false, message: `You have reached the usage limit (${limit}) for the College List Generator` });
+            return res.status(403).json({ success: false, message: `Usage Limit Reached. Buy more limit to continue` });
         }
 
         // 4. Prepare Data for External API
