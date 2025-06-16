@@ -22,25 +22,25 @@ exports.initiateRazorpayOrder = async (req, res) => {
         const user = await User.findById(req.user.id);
         
         // Handle free plan
-        if (planId === 'starter') {
-            console.log('[Payment] Processing free plan activation for user:', user.email);
+        // if (planId === 'starter') {
+        //     console.log('[Payment] Processing free plan activation for user:', user.email);
             
-            user.counselingPlan = 'starter';
-            user.collegeListGenerationLimit += 3;
-            user.paymentStatus = 'Completed';
+        //     user.counselingPlan = 'starter';
+        //     user.collegeListGenerationLimit += 3;
+        //     user.paymentStatus = 'Completed';
             
-            await user.save();
-            console.log('[Payment] Free plan activated successfully:', {
-                newLimit: user.collegeListGenerationLimit,
-                plan: user.counselingPlan
-            });
+        //     await user.save();
+        //     console.log('[Payment] Free plan activated successfully:', {
+        //         newLimit: user.collegeListGenerationLimit,
+        //         plan: user.counselingPlan
+        //     });
 
-            return res.json({ 
-                success: true, 
-                plan: user.counselingPlan,
-                collegeListGenerationLimit: user.collegeListGenerationLimit
-            });
-        }
+        //     return res.json({ 
+        //         success: true, 
+        //         plan: user.counselingPlan,
+        //         collegeListGenerationLimit: user.collegeListGenerationLimit
+        //     });
+        // }
 
         // Paid plan handling
         console.log('[Payment] Processing paid plan purchase:', {
